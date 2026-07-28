@@ -29,21 +29,27 @@
 
   /* ---------- top-left wordmark (small, always static) ---------- */
   .mark{
-    position:fixed; top:28px; left:32px;
+    position:fixed; top:18px; left:22px;
     display:flex; align-items:center;
     font-family:'Fraunces',serif;
     font-size:12px; font-weight:500; letter-spacing:0.02em;
     z-index:70;
     color:var(--ink);
+    background:var(--paper);
+    padding:10px;
+    border-radius:4px;
   }
   .mark .wordmark{ white-space:nowrap; }
   .menu-btn{
-    position:fixed; top:28px; right:32px;
+    position:fixed; top:18px; right:22px;
     display:inline-flex; align-items:center; gap:6px;
     cursor:pointer;
     font-family:'Inter',sans-serif; font-size:10px; letter-spacing:0.2em;
     text-transform:uppercase; color:var(--mute);
     z-index:70;
+    background:var(--paper);
+    padding:10px;
+    border-radius:4px;
   }
   .menu-btn .bars{ display:flex; flex-direction:column; gap:3px; }
   .menu-btn .bars span{ width:14px; height:1px; background:var(--ink); transition:transform .3s ease, opacity .3s ease; }
@@ -100,11 +106,12 @@
 
   /* ---------- profile panel (overlays hero, doesn't hide it) ---------- */
   .profile-panel{
-    width:min(440px, 78vw);
+    width:0;
     max-height:0; opacity:0; overflow:hidden; pointer-events:none;
     transition:max-height .6s cubic-bezier(.16,.8,.3,1), opacity .4s ease;
   }
   .profile-panel.active{
+    width:min(440px, 78vw);
     max-height:60vh; opacity:1; pointer-events:auto; overflow-y:auto;
     scrollbar-width:none; -ms-overflow-style:none;
   }
@@ -183,12 +190,6 @@
     z-index:2;
     perspective:1400px;
   }
-  .header-fade-top{
-    position:fixed; top:0; left:0; right:0; height:100px;
-    background:linear-gradient(to bottom, var(--paper) 0%, rgba(255,255,255,0.65) 50%, transparent 100%);
-    pointer-events:none;
-    z-index:55;
-  }
   .item{
     position:absolute;
     width:172px; height:224px;
@@ -196,7 +197,7 @@
     overflow:hidden;
     box-shadow:0 18px 40px rgba(20,20,20,0.10);
     cursor:pointer;
-    will-change:transform, opacity;
+    will-change:transform;
   }
   .item .swatch{
     position:relative;
@@ -234,12 +235,8 @@
     background:var(--paper);
     padding:130px 8vw 120px;
     scrollbar-width:none; -ms-overflow-style:none;
-    transition:padding-left .55s cubic-bezier(.16,.8,.3,1);
   }
   .stage::-webkit-scrollbar{ display:none; width:0; height:0; }
-  @media (min-width:1025px){
-    body.sidebar-open .stage{ padding-left:calc(8vw + var(--sidebar-w)); }
-  }
   .stage .back{
     position:fixed; top:30px; right:36px;
     font-size:10.5px; letter-spacing:0.2em; text-transform:uppercase;
@@ -412,7 +409,6 @@
     <span class="wordmark">nanami shibata</span>
   </div>
   <div class="menu-btn" id="menuBtn"><span class="bars"><span></span><span></span><span></span></span>menu</div>
-  <div class="header-fade-top"></div>
 
   <nav class="sidebar" id="sidebar">
     <div class="nav-group" data-group="profile" data-page="profile" data-top="section-about">
@@ -1183,7 +1179,7 @@ const N = items.length;
 const els = items.map((it, i) => {
   const el = document.createElement('div');
   el.className = 'item';
-  el.innerHTML = `<div class="swatch" style="background:${it.hue}"><img src="${it.img}" alt="" loading="lazy"><span class="idx">0${i+1}</span><span class="cat">${it.cat}</span></div>`;
+  el.innerHTML = `<div class="swatch" style="background:${it.hue}"><img src="${it.img}" alt="" fetchpriority="high"><span class="idx">0${i+1}</span><span class="cat">${it.cat}</span></div>`;
   el.addEventListener('click', () => {
     const groupName = it.page === 'stage-works' ? 'works' : it.page === 'stage-projects' ? 'projects' : null;
     if(groupName) revealSidebarFor(groupName);
@@ -1261,10 +1257,11 @@ function revealSidebarFor(groupName){
   });
 }
 
-/* ---------------- wheel: adjust spacing + reveal sidebar on first use (hero only) ---------------- */
+/* ---------------- wheel: adjust spacing + reveal sidebar, first view only ---------------- */
 window.addEventListener('wheel', (e) => {
   const heroActive = !document.getElementById('hero').classList.contains('hidden');
   if(!heroActive) return; /* scrolling other pages must never touch the menu or spiral */
+  if(profilePage.classList.contains('active')) return; /* scrolling the profile panel must stay on the first view, no menu */
   spacing = Math.max(SPACING_MIN, Math.min(SPACING_MAX, spacing + e.deltaY * 0.12));
   if(!sidebarRevealed) revealSidebar();
 }, {passive:true});
