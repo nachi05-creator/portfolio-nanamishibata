@@ -1232,11 +1232,14 @@ function renderSpiral(){
 }
 
 let lastT = performance.now();
+const heroEl = document.getElementById('hero');
 function frame(t){
   const dt = t - lastT; lastT = t;
-  rotation += ROT_SPEED * dt;
-  climb += CLIMB_SPEED * dt;
-  renderSpiral();
+  if(!heroEl.classList.contains('hidden')){
+    rotation += ROT_SPEED * dt;
+    climb += CLIMB_SPEED * dt;
+    renderSpiral();
+  }
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
