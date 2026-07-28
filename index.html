@@ -1346,11 +1346,25 @@ document.querySelectorAll('.nav-group.contact-row').forEach(row => {
 document.querySelectorAll('[data-back]').forEach(b => b.addEventListener('click', closeStage));
 markEl.addEventListener('click', (e) => { if(e.target === markEl || e.target.classList.contains('wordmark')){ closeStage(); } });
 
+/* ---------------- wcard thumb videos: only load/play while on screen ---------------- */
+const thumbVideoObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    const v = entry.target;
+    if(entry.isIntersecting && !document.querySelector('.modal-overlay.active')){
+      v.play().catch(() => {});
+    } else {
+      v.pause();
+    }
+  });
+}, { rootMargin: '200px' });
+document.querySelectorAll('.wcard-thumb video').forEach(v => thumbVideoObserver.observe(v));
+
 /* ---------------- work / project detail modals ---------------- */
 function openModal(id){
   const m = document.getElementById(id);
   if(!m) return;
   m.classList.add('active');
+  document.querySelectorAll('.wcard-thumb video').forEach(v => v.pause());
   m.querySelectorAll('video').forEach(v => {
     v.muted = false;
     v.currentTime = 0;
@@ -1362,6 +1376,10 @@ function closeModal(){
     m.classList.remove('active');
     m.querySelectorAll('video').forEach(v => { v.pause(); v.muted = true; });
   });
+  document.querySelectorAll('.wcard-thumb video').forEach(v => {
+    const r = v.getBoundingClientRect();
+    if(r.top < window.innerHeight + 200 && r.bottom > -200){ v.play().catch(() => {}); }
+  });
 }
 document.querySelectorAll('.wcard[data-modal]').forEach(card => {
   card.addEventListener('click', () => openModal(card.dataset.modal));
@@ -1370,19 +1388,6 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
   overlay.addEventListener('click', (e) => { if(e.target === overlay) closeModal(); });
   overlay.querySelector('[data-modal-close]').addEventListener('click', closeModal);
 });
-
-/* ---------------- wcard thumb videos: only load/play while on screen ---------------- */
-const thumbVideoObserver = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
-    const v = entry.target;
-    if(entry.isIntersecting){
-      v.play().catch(() => {});
-    } else {
-      v.pause();
-    }
-  });
-}, { rootMargin: '200px' });
-document.querySelectorAll('.wcard-thumb video').forEach(v => thumbVideoObserver.observe(v));
 
 /* ---------------- scroll-spy: highlight current works/projects category in sidebar ---------------- */
 function setupScrollSpy(containerId, sectionSelector, pageKey){
