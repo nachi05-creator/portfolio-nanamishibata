@@ -1,0 +1,1394 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>nanami shibata portfolio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;1,9..144,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#141414;
+    --paper:#ffffff;
+    --mute:#9a988f;
+    --line:#e7e5df;
+    --sidebar-w:260px;
+    --title-shift:260px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{
+    background:var(--paper);color:var(--ink);
+    height:100%; overflow:hidden;
+  }
+  body{
+    font-family:'Inter',sans-serif;
+    font-weight:400;
+    cursor:default;
+  }
+  ::selection{background:var(--ink);color:var(--paper);}
+
+  /* ---------- top-left wordmark (small, always static) ---------- */
+  .mark{
+    position:fixed; top:28px; left:32px;
+    display:flex; align-items:center;
+    font-family:'Fraunces',serif;
+    font-size:12px; font-weight:500; letter-spacing:0.02em;
+    z-index:70;
+    color:var(--ink);
+  }
+  .mark .wordmark{ white-space:nowrap; }
+  .menu-btn{
+    position:fixed; top:28px; right:32px;
+    display:inline-flex; align-items:center; gap:6px;
+    cursor:pointer;
+    font-family:'Inter',sans-serif; font-size:10px; letter-spacing:0.2em;
+    text-transform:uppercase; color:var(--mute);
+    z-index:70;
+  }
+  .menu-btn .bars{ display:flex; flex-direction:column; gap:3px; }
+  .menu-btn .bars span{ width:14px; height:1px; background:var(--ink); transition:transform .3s ease, opacity .3s ease; }
+  .menu-btn.open .bars span:nth-child(1){ transform:translateY(4px) rotate(45deg); }
+  .menu-btn.open .bars span:nth-child(2){ opacity:0; }
+  .menu-btn.open .bars span:nth-child(3){ transform:translateY(-4px) rotate(-45deg); }
+
+  /* ---------- hero (pinned, never scrolls) ---------- */
+  .view{
+    position:fixed; inset:0;
+    z-index:5;
+    transition:opacity .45s ease;
+  }
+  .view.hidden{ opacity:0; pointer-events:none; }
+
+  .hero-left{
+    --tx:0px; --ty:-50%;
+    position:fixed; left:40px; top:50%;
+    transform:translate(var(--tx),var(--ty));
+    transition:transform .55s cubic-bezier(.16,.8,.3,1), top .6s cubic-bezier(.16,.8,.3,1);
+    z-index:10;
+    display:flex; flex-direction:column; gap:26px;
+    max-height:84vh;
+  }
+  .hero-left.shift{ --tx:var(--title-shift); }
+  .hero-left.raised{ top:70px; --ty:0px; }
+  .title-block{ flex:none; }
+  .title-block .eyebrow{
+    font-size:10.5px; letter-spacing:0.28em; text-transform:uppercase; color:var(--mute);
+    margin-bottom:14px;
+  }
+  .title-block h1{
+    font-family:'Fraunces',serif;
+    font-weight:300; font-style:italic;
+    font-size:clamp(24px,3.6vw,50px);
+    line-height:1.18;
+    text-align:left;
+    white-space:nowrap;
+  }
+  .title-block h1 b{ font-style:normal; font-weight:500; margin-left:0.28em; }
+  .title-block .hint{
+    margin-top:22px;
+    font-size:9.5px; letter-spacing:0.2em; text-transform:uppercase; color:var(--mute);
+    display:flex; align-items:center; gap:8px;
+  }
+  .title-block .hint span{
+    width:26px; height:1px; background:var(--line); position:relative; overflow:hidden;
+  }
+  .title-block .hint span::after{
+    content:""; position:absolute; inset:0; background:var(--ink);
+    animation:sweep 1.8s ease-in-out infinite;
+  }
+  @keyframes sweep{ 0%{transform:translateX(-100%);} 50%{transform:translateX(0);} 100%{transform:translateX(100%);} }
+
+  /* ---------- profile panel (overlays hero, doesn't hide it) ---------- */
+  .profile-panel{
+    width:min(440px, 78vw);
+    max-height:0; opacity:0; overflow:hidden; pointer-events:none;
+    transition:max-height .6s cubic-bezier(.16,.8,.3,1), opacity .4s ease;
+  }
+  .profile-panel.active{
+    max-height:60vh; opacity:1; pointer-events:auto; overflow-y:auto;
+    scrollbar-width:none; -ms-overflow-style:none;
+  }
+  .profile-panel.active::-webkit-scrollbar{ display:none; width:0; height:0; }
+  .profile-panel-inner{ padding:2px 4px 24px 0; }
+  .profile-panel-inner > .eyebrow{ display:block; font-size:10.5px; letter-spacing:0.28em; text-transform:uppercase; color:var(--mute); margin-bottom:20px; }
+  .profile-section{ scroll-margin-top:20px; }
+  .profile-section + .profile-section{ margin-top:48px; padding-top:40px; border-top:1px solid var(--line); }
+  .panel-title{
+    font-family:'Fraunces',serif; font-weight:300; font-style:italic; font-size:26px;
+    margin-bottom:18px;
+  }
+  .panel-media{
+    width:200px; aspect-ratio:3/4; border-radius:4px; overflow:hidden; margin-bottom:22px;
+    background:#f2f1ec;
+  }
+  .panel-media img{ width:100%; height:100%; object-fit:cover; display:block; }
+
+  /* ---------- sidebar menu ---------- */
+  .sidebar{
+    position:fixed; top:0; left:0; bottom:0;
+    width:var(--sidebar-w);
+    background:var(--paper);
+    border-right:1px solid var(--line);
+    padding:88px 32px 40px;
+    transform:translateX(-100%);
+    transition:transform .55s cubic-bezier(.16,.8,.3,1);
+    z-index:60;
+    display:flex; flex-direction:column; gap:6px;
+    overflow-y:auto;
+  }
+  .sidebar.show{ transform:translateX(0); }
+
+  .nav-group{ border-bottom:1px solid var(--line); }
+  .nav-group:last-of-type{ border-bottom:none; }
+  .nav-group .head{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 0;
+    cursor:pointer;
+  }
+  .nav-group .head .left{ display:flex; align-items:baseline; gap:10px; }
+  .nav-group .num{
+    font-family:'Fraunces',serif; font-style:italic;
+    font-size:11px; color:var(--mute);
+  }
+  .nav-group .top{
+    font-family:'Fraunces',serif; font-size:16px; font-weight:500;
+  }
+  .nav-group .chev{
+    font-size:12px; color:var(--mute);
+    transition:transform .35s ease;
+  }
+  .nav-group.open .chev{ transform:rotate(135deg); }
+
+  .nav-group .sub{
+    max-height:0; overflow:hidden;
+    transition:max-height .45s cubic-bezier(.16,.8,.3,1);
+  }
+  .nav-group.open .sub{ max-height:400px; }
+  .nav-group ul{ list-style:none; display:flex; flex-direction:column; gap:2px; padding-bottom:16px; }
+  .nav-group ul a{
+    display:block; padding:6px 0 6px 22px;
+    font-size:12px; color:var(--ink); text-decoration:none;
+    position:relative; transition:padding-left .25s ease, color .25s ease;
+  }
+  .nav-group ul a:hover{ padding-left:28px; color:#000; }
+  .nav-group ul a:hover::before{ content:"—"; position:absolute; left:0; }
+  .nav-group ul a.current{ padding-left:28px; color:#96742E; }
+  .nav-group ul a.current::before{ content:"—"; position:absolute; left:0; color:#96742E; }
+
+  .nav-group.contact-row{ cursor:pointer; }
+
+  /* ---------- spiral gallery ---------- */
+  .spiral-stage{
+    position:absolute; inset:0;
+    z-index:2;
+    perspective:1400px;
+  }
+  .header-fade-top{
+    position:fixed; top:0; left:0; right:0; height:100px;
+    background:linear-gradient(to bottom, var(--paper) 0%, rgba(255,255,255,0.65) 50%, transparent 100%);
+    pointer-events:none;
+    z-index:55;
+  }
+  .item{
+    position:absolute;
+    width:172px; height:224px;
+    border-radius:2px;
+    overflow:hidden;
+    box-shadow:0 18px 40px rgba(20,20,20,0.10);
+    cursor:pointer;
+    will-change:transform;
+  }
+  .item .swatch{
+    position:relative;
+    width:100%; height:100%;
+    display:flex; align-items:flex-end;
+    padding:14px;
+    filter:grayscale(1) contrast(0.94);
+    transition:filter .5s ease;
+  }
+  .item:hover .swatch{ filter:grayscale(0) contrast(1); }
+  .item .swatch img{
+    position:absolute; inset:0; z-index:0;
+    width:100%; height:100%; object-fit:cover;
+  }
+  .item .swatch::before{
+    content:""; position:absolute; inset:0; z-index:1;
+    background:linear-gradient(to top, rgba(10,10,10,0.55), transparent 62%);
+  }
+  .item .cat{
+    position:relative; z-index:2;
+    font-family:'Fraunces',serif; font-style:italic;
+    font-size:11.5px; color:#fff; letter-spacing:0.02em;
+    text-shadow:0 1px 6px rgba(0,0,0,0.3);
+  }
+  .item .idx{
+    position:absolute; z-index:2; top:12px; right:14px;
+    font-size:9.5px; color:rgba(255,255,255,0.85); letter-spacing:0.1em;
+  }
+
+  /* ---------- destination views (swap in over hero) ---------- */
+  .stage{
+    display:block;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    background:var(--paper);
+    padding:130px 8vw 120px;
+    scrollbar-width:none; -ms-overflow-style:none;
+    transition:padding-left .55s cubic-bezier(.16,.8,.3,1);
+  }
+  .stage::-webkit-scrollbar{ display:none; width:0; height:0; }
+  @media (min-width:1025px){
+    body.sidebar-open .stage{ padding-left:calc(8vw + var(--sidebar-w)); }
+  }
+  .stage .back{
+    position:fixed; top:30px; right:36px;
+    font-size:10.5px; letter-spacing:0.2em; text-transform:uppercase;
+    color:var(--mute); cursor:pointer;
+    z-index:20;
+  }
+  .stage .eyebrow{ font-size:10px; letter-spacing:0.3em; text-transform:uppercase; color:var(--mute); }
+  .stage h2{ font-family:'Fraunces',serif; font-weight:300; font-style:italic; font-size:42px; }
+  .stage p{ font-size:12px; color:var(--mute); max-width:360px; text-align:center; line-height:1.8; }
+
+  /* ---------- stage content template (works / projects / profile / contact) ---------- */
+  .stage-inner{ max-width:680px; margin:0 auto; text-align:left; }
+  .stage-inner > .eyebrow{ display:block; margin-bottom:18px; }
+  .stage-inner > h2{ text-align:left; margin-bottom:6px; }
+  .stage-inner > .meta{
+    font-size:11px; color:var(--mute); letter-spacing:.05em;
+    margin-bottom:8px 0 36px; margin-top:14px;
+    display:flex; gap:14px; flex-wrap:wrap;
+  }
+  .work{ margin-top:56px; }
+  .work:first-of-type{ margin-top:40px; }
+  .work + .work{ padding-top:48px; border-top:1px solid var(--line); }
+  .work h3{
+    font-family:'Fraunces',serif; font-style:italic; font-weight:500;
+    font-size:21px; margin-bottom:10px; text-align:left; line-height:1.4;
+  }
+  .work .meta{
+    font-size:10.5px; color:var(--mute); letter-spacing:.06em;
+    margin-bottom:22px; display:flex; gap:12px; flex-wrap:wrap; text-transform:uppercase;
+  }
+  .media{ width:100%; margin:8px 0 24px; border-radius:2px; overflow:hidden; background:#f2f1ec; }
+  .media video, .media img{
+    width:auto; height:auto; max-width:100%; max-height:70vh;
+    display:block; margin:0 auto; background:#f2f1ec;
+  }
+  .media-tall{
+    max-width:340px; max-height:78vh; overflow-y:auto; margin-left:auto; margin-right:auto;
+    border-radius:14px; border:1px solid var(--line);
+    scrollbar-width:none; -ms-overflow-style:none;
+  }
+  .media-tall::-webkit-scrollbar{ display:none; width:0; height:0; }
+  .media-tall img{ max-height:none; object-fit:cover; }
+  .media-white{ background:#fff; }
+  .media-white img{ background:#fff; padding:24px; }
+  .hscroll{
+    display:flex; gap:14px; overflow-x:auto; margin:8px 0 24px; padding-bottom:12px;
+    scrollbar-width:none; -ms-overflow-style:none;
+  }
+  .hscroll::-webkit-scrollbar{ display:none; width:0; height:0; }
+  .hscroll img{ height:360px; width:auto; flex:none; border-radius:6px; display:block; }
+  .pair-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:8px; }
+  .pair-grid img{ width:100%; border-radius:6px; display:block; }
+  .art-grid{ display:grid; grid-template-columns:1fr 1fr; gap:28px; margin:24px 0; }
+  .art-grid img{ width:100%; border-radius:4px; display:block; margin-bottom:14px; background:#f2f1ec; }
+  .art-grid h4{ font-family:'Fraunces',serif; font-style:italic; font-weight:500; font-size:15px; margin-bottom:8px; }
+  .art-grid p{ font-size:12.5px; line-height:1.85; color:var(--ink); }
+  .block{ margin-bottom:18px; }
+  .block b{
+    font-weight:500; color:var(--mute); font-size:10px; letter-spacing:.14em;
+    text-transform:uppercase; display:block; margin-bottom:7px;
+  }
+  .block p{ font-size:13px; line-height:1.95; color:var(--ink); text-align:left; max-width:none; }
+  ul.plain{ list-style:none; }
+  ul.plain li{ font-size:13px; line-height:2; color:var(--ink); }
+  .link{
+    display:inline-block; margin-top:6px; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--ink); border-bottom:1px solid var(--ink); padding-bottom:2px; text-decoration:none;
+  }
+  .thumb-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:10px; margin-top:20px; }
+  .thumb-grid img, .thumb-grid video{ width:100%; height:140px; object-fit:cover; border-radius:2px; background:#f2f1ec; }
+  .note{ font-size:10.5px; color:var(--mute); margin-top:14px; }
+  .skill-tags{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:28px; }
+  .skill-tags span{
+    font-size:11px; letter-spacing:.04em; color:var(--ink);
+    border:1px solid var(--line); border-radius:20px; padding:6px 14px;
+  }
+
+  /* ---------- works / projects card grid ---------- */
+  .grid-page{ max-width:820px; margin:0 auto; }
+  .grid-page > h2{ margin-bottom:44px; }
+  .grid-section{ margin-bottom:60px; scroll-margin-top:110px; }
+  .grid-section h3{
+    font-family:'Fraunces',serif; font-style:italic; font-weight:500; font-size:19px;
+    margin-bottom:20px; text-align:left;
+  }
+  .wgrid{ display:grid; grid-template-columns:1fr 1fr; gap:24px; scroll-margin-top:110px; }
+  .wcard{
+    cursor:pointer;
+    border-radius:12px; overflow:hidden;
+    background:var(--paper);
+    border:1px solid var(--line);
+    box-shadow:0 14px 30px rgba(20,20,20,0.07), 0 2px 8px rgba(20,20,20,0.05);
+    transition:box-shadow .35s ease, transform .35s ease;
+  }
+  .wcard:hover{ box-shadow:0 20px 40px rgba(20,20,20,0.12), 0 4px 10px rgba(20,20,20,0.06); transform:translateY(-3px); }
+  .wcard-thumb{
+    width:100%; aspect-ratio:4/3; overflow:hidden;
+    background:#f2f1ec;
+  }
+  .wcard-thumb img, .wcard-thumb video{
+    width:100%; height:100%; object-fit:cover; display:block;
+    transition:transform .5s cubic-bezier(.16,.8,.3,1);
+  }
+  .wcard:hover .wcard-thumb img, .wcard:hover .wcard-thumb video{ transform:scale(1.045); }
+  .wcard-thumb-taiwan img{ object-position:50% 46%; }
+  .wcard-thumb-top img{ object-position:50% 0%; }
+  .wcard-thumb-white{ background:#fff; }
+  .wcard-thumb-white img{ object-fit:contain; padding:14px; }
+  .wcard-cat{ font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--mute); margin:14px 16px 6px; }
+  .wcard-title{ font-size:13px; color:var(--ink); line-height:1.5; margin:0 16px 16px; }
+
+  /* ---------- detail modal (overlays grid, blurred backdrop) ---------- */
+  .modal-overlay{
+    position:fixed; inset:0; z-index:200;
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(20,20,20,0.32);
+    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+    opacity:0; pointer-events:none;
+    transition:opacity .35s ease;
+    padding:40px 20px;
+  }
+  .modal-overlay.active{ opacity:1; pointer-events:auto; }
+  .modal-box{
+    width:min(680px, 100%); max-height:86vh; overflow-y:auto;
+    background:var(--paper); border-radius:10px; padding:52px 44px 44px;
+    position:relative; text-align:left;
+    transform:translateY(14px) scale(.98);
+    transition:transform .35s cubic-bezier(.16,.8,.3,1);
+    scrollbar-width:none; -ms-overflow-style:none;
+  }
+  .modal-box::-webkit-scrollbar{ display:none; width:0; height:0; }
+  .modal-overlay.active .modal-box{ transform:translateY(0) scale(1); }
+  .modal-close{
+    position:absolute; top:22px; right:22px;
+    background:none; border:none; cursor:pointer; line-height:1;
+    font-size:20px; font-family:'Inter',sans-serif; font-weight:300; color:var(--mute);
+  }
+  .modal-title{
+    font-family:'Fraunces',serif; font-style:italic; font-weight:500; font-size:24px;
+    margin:14px 0 10px; text-align:left;
+  }
+
+  /* ---------- mobile + tablet: menu is compact and allowed to overlap content ---------- */
+  @media (max-width:1024px){
+    :root{ --title-shift:33.33vw; }
+    .sidebar{ width:33.33vw; padding:80px 16px 32px; gap:2px; }
+    .nav-group .head{ padding:12px 0; }
+    .nav-group .head .left{ gap:6px; }
+    .nav-group .num{ font-size:9px; }
+    .nav-group .top{ font-size:12.5px; }
+    .nav-group .chev{ font-size:10px; }
+    .nav-group ul a{ font-size:10px; padding:5px 0 5px 14px; line-height:1.4; }
+    .nav-group ul a:hover, .nav-group ul a.current{ padding-left:18px; }
+    .hero-left{ left:24px; }
+    .profile-panel.active{ max-height:50vh; }
+    .stage{ padding:110px 6vw 100px; }
+    .modal-box{ padding:44px 24px 32px; }
+  }
+  /* ---------- phone only: collapse the two-column grids to one ---------- */
+  @media (max-width:480px){
+    .item{ width:120px; height:158px; }
+    .wgrid{ grid-template-columns:1fr; }
+    .art-grid, .pair-grid{ grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="mark" id="mark">
+    <span class="wordmark">nanami shibata</span>
+  </div>
+  <div class="menu-btn" id="menuBtn"><span class="bars"><span></span><span></span><span></span></span>menu</div>
+  <div class="header-fade-top"></div>
+
+  <nav class="sidebar" id="sidebar">
+    <div class="nav-group" data-group="profile" data-page="profile" data-top="section-about">
+      <div class="head">
+        <div class="left"><span class="num">01</span><span class="top">profile</span></div>
+        <span class="chev">+</span>
+      </div>
+      <div class="sub"><ul>
+        <li><a href="#" data-page="profile" data-target="section-about">about me</a></li>
+        <li><a href="#" data-page="profile" data-target="section-skills">skills</a></li>
+      </ul></div>
+    </div>
+    <div class="nav-group" data-group="works" data-page="stage-works" data-top="grid-web">
+      <div class="head">
+        <div class="left"><span class="num">02</span><span class="top">works</span></div>
+        <span class="chev">+</span>
+      </div>
+      <div class="sub"><ul>
+        <li><a href="#" data-page="stage-works" data-target="grid-web">web (ui)</a></li>
+        <li><a href="#" data-page="stage-works" data-target="grid-interactive">interactive art</a></li>
+        <li><a href="#" data-page="stage-works" data-target="grid-pv">pv</a></li>
+        <li><a href="#" data-page="stage-works" data-target="grid-motion">motion graphics</a></li>
+        <li><a href="#" data-page="stage-works" data-target="grid-3d">3d</a></li>
+        <li><a href="#" data-page="stage-works" data-target="grid-graphic">graphic design</a></li>
+        <li><a href="#" data-page="stage-works" data-target="grid-illustration">illustration</a></li>
+        <li><a href="#" data-page="stage-works" data-target="grid-drawing">drawing</a></li>
+      </ul></div>
+    </div>
+    <div class="nav-group" data-group="projects" data-page="stage-projects" data-top="grid-vtako">
+      <div class="head">
+        <div class="left"><span class="num">03</span><span class="top">projects</span></div>
+        <span class="chev">+</span>
+      </div>
+      <div class="sub"><ul>
+        <li><a href="#" data-page="stage-projects" data-target="grid-vtako">V たこ</a></li>
+        <li><a href="#" data-page="stage-projects" data-target="grid-natsumatsuri">夏祭り</a></li>
+        <li><a href="#" data-page="stage-projects" data-target="grid-3f">三F</a></li>
+        <li><a href="#" data-page="stage-projects" data-target="grid-dance">dance club</a></li>
+        <li><a href="#" data-page="stage-projects" data-target="grid-sanninten">三人展</a></li>
+      </ul></div>
+    </div>
+    <div class="nav-group contact-row" data-target="stage-contact">
+      <div class="head">
+        <div class="left"><span class="num">04</span><span class="top">contact</span></div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="view" id="hero">
+    <div class="hero-left" id="heroLeft">
+      <div class="title-block" id="titleBlock">
+        <div class="eyebrow">ui / interactive / graphic</div>
+        <h1>nanami<b>shibata</b></h1>
+        <div class="hint">scroll to explore<span></span></div>
+      </div>
+
+      <!-- ================= 01 profile (overlays hero, scroll-connected) ================= -->
+
+      <div class="profile-panel" id="profile-page">
+        <div class="profile-panel-inner">
+          <span class="eyebrow">01 — profile</span>
+
+          <section class="profile-section" id="section-about">
+            <h2 class="panel-title">about me</h2>
+            <div class="panel-media"><img src="image/profile/自己紹介写真_about.jpg" alt="柴田虹美" loading="lazy"></div>
+            <div class="block">
+              <p>柴田 虹美（Nanami Shibata）<br>兵庫県立伊川谷北高等学校卒業。神戸芸術工科大学 芸術工学部 ビジュアルデザイン学科 WEB・デジタルデザインコース3年在学中。</p>
+            </div>
+            <div class="block">
+              <p>大学では、印刷物からWeb・映像・インタラクティブまで幅広いデザインを学び、ゼミではインタラクティブアートの研究に取り組んでいます。学業への取り組みが評価され、2024年度・2026年度には特待生に選出されました。</p>
+            </div>
+            <div class="block">
+              <p>好奇心旺盛で向上心が高く、新しい技術や表現に積極的に挑戦しています。サークルではダンス・バスケットボール・フットサルに所属し、多様な人とのコミュニケーションやチームワークも大切にしています。</p>
+            </div>
+            <div class="block">
+              <p>将来は、インタラクティブデザインを通して、言語や価値観の違いを超え、人と人をつなぐ新しいコミュニケーション体験を創造できるクリエイターを目指しています。</p>
+            </div>
+          </section>
+
+          <section class="profile-section" id="section-skills">
+            <h2 class="panel-title">skills</h2>
+
+            <div class="block">
+              <b>Field</b>
+              <div class="skill-tags">
+                <span>Interactive Art</span><span>Graphic Design</span><span>Web / UI</span>
+                <span>Motion Graphics</span><span>3DCG</span><span>Illustration</span><span>Direction</span>
+              </div>
+            </div>
+
+            <div class="block">
+              <b>Tools</b>
+              <div class="skill-tags">
+                <span>Photoshop</span><span>Illustrator</span><span>After Effects</span><span>Premiere Pro</span>
+                <span>Unity</span><span>TouchDesigner</span><span>Blender</span><span>VSCode</span>
+              </div>
+            </div>
+
+            <div class="block">
+              <b>Certifications</b>
+              <ul class="plain">
+                <li>色彩検定 2級</li>
+                <li>Photoshopクリエイター能力認定試験 エキスパート</li>
+                <li>Illustratorクリエイター能力認定試験 エキスパート</li>
+                <li>MOS Word エキスパート</li>
+                <li>MOS Excel 一般</li>
+              </ul>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <div class="spiral-stage" id="spiralStage"></div>
+  </div>
+
+  <!-- ================= 02 works (card grid, click -> modal) ================= -->
+
+  <div class="view stage hidden" id="stage-works">
+    <div class="stage-inner grid-page">
+      <span class="eyebrow">02 — works</span>
+      <h2>works</h2>
+
+      <section class="grid-section" id="grid-web">
+        <h3>web (ui)</h3>
+        <div class="wgrid">
+          <div class="wcard" data-modal="modal-web-1">
+            <div class="wcard-thumb"><video src="image/works/WEB/site1_web.mp4" muted autoplay loop preload="auto" playsinline></video></div>
+            <div class="wcard-cat">web (ui)</div>
+            <div class="wcard-title">みんなを守る！ウルトラマン ひっぱりだこ飯</div>
+          </div>
+          <div class="wcard" data-modal="modal-web-2">
+            <div class="wcard-thumb wcard-thumb-taiwan"><img src="image/works/WEB/site2.jpg" alt="" loading="lazy"></div>
+            <div class="wcard-cat">web (ui)</div>
+            <div class="wcard-title">TAIWAN CITY</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid-section" id="grid-interactive">
+        <h3>interactive art</h3>
+        <div class="wgrid">
+          <div class="wcard" data-modal="modal-interactive-1">
+            <div class="wcard-thumb"><video src="image/works/interactive/ImprovisedContinuum_web.mp4" muted autoplay loop preload="auto" playsinline></video></div>
+            <div class="wcard-cat">interactive art</div>
+            <div class="wcard-title">Improvised Continuum</div>
+          </div>
+          <div class="wcard" data-modal="modal-interactive-2">
+            <div class="wcard-thumb"><video src="image/works/interactive/VJ_shibata_web.mp4" muted autoplay loop preload="auto" playsinline></video></div>
+            <div class="wcard-cat">interactive art</div>
+            <div class="wcard-title">VDJ</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid-section" id="grid-pv">
+        <h3>pv</h3>
+        <div class="wgrid">
+          <div class="wcard" data-modal="modal-pv-1">
+            <div class="wcard-thumb"><video src="image/works/PV/チームcherry_福崎町PV_完成版_web.mp4" muted autoplay loop preload="auto" playsinline></video></div>
+            <div class="wcard-cat">pv</div>
+            <div class="wcard-title">福崎町 プロモーションビデオ</div>
+          </div>
+          <div class="wcard" data-modal="modal-pv-2">
+            <div class="wcard-thumb"><video src="image/works/PV/企画デザイン_クイズ_web.mp4" muted autoplay loop preload="auto" playsinline></video></div>
+            <div class="wcard-cat">pv</div>
+            <div class="wcard-title">泉平企業ブースデザイン（企画デザイン）</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid-section" id="grid-motion">
+        <h3>motion graphics</h3>
+        <div class="wgrid">
+          <div class="wcard" data-modal="modal-motion-1">
+            <div class="wcard-thumb"><video src="image/works/motion%20graphics/将来の夢_web.mp4" muted autoplay loop preload="auto" playsinline></video></div>
+            <div class="wcard-cat">motion graphics</div>
+            <div class="wcard-title">将来の夢</div>
+          </div>
+          <div class="wcard" data-modal="modal-motion-2">
+            <div class="wcard-thumb"><video src="image/works/motion%20graphics/step%20by%20step_web.mp4" muted autoplay loop preload="auto" playsinline></video></div>
+            <div class="wcard-cat">motion graphics</div>
+            <div class="wcard-title">Step by Step</div>
+          </div>
+          <div class="wcard" data-modal="modal-motion-3">
+            <div class="wcard-thumb"><video src="image/works/motion%20graphics/【実話】人生で体験したガチで怖かった話3選~!!_web.mp4" muted autoplay loop preload="auto" playsinline></video></div>
+            <div class="wcard-cat">motion graphics</div>
+            <div class="wcard-title">【実話】人生で体験したガチで怖かった話3選</div>
+          </div>
+          <div class="wcard" data-modal="modal-motion-4">
+            <div class="wcard-thumb"><video src="image/works/motion%20graphics/Non-anthropocentric%20perspective_web.mp4" muted autoplay loop preload="auto" playsinline></video></div>
+            <div class="wcard-cat">motion graphics</div>
+            <div class="wcard-title">Non-anthropocentric perspective</div>
+          </div>
+          <div class="wcard" data-modal="modal-motion-5">
+            <div class="wcard-thumb"><video src="image/works/motion%20graphics/エビカニクス_web.mp4" muted autoplay loop preload="auto" playsinline></video></div>
+            <div class="wcard-cat">motion graphics</div>
+            <div class="wcard-title">エビカニクス</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid-section" id="grid-3d">
+        <h3>3d</h3>
+        <div class="wgrid">
+          <div class="wcard" data-modal="modal-3d-1">
+            <div class="wcard-thumb"><video src="image/works/3D/Wizard%20Clowns_web.mp4" muted autoplay loop preload="auto" playsinline></video></div>
+            <div class="wcard-cat">3d</div>
+            <div class="wcard-title">Wizard Clowns</div>
+          </div>
+          <div class="wcard" data-modal="modal-3d-2">
+            <div class="wcard-thumb"><video src="image/works/3D/magic%20wand.mp4" muted autoplay loop preload="auto" playsinline></video></div>
+            <div class="wcard-cat">3d</div>
+            <div class="wcard-title">magic wand</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid-section" id="grid-graphic">
+        <h3>graphic design</h3>
+        <div class="wgrid">
+          <div class="wcard" data-modal="modal-graphic-1">
+            <div class="wcard-thumb"><img src="image/works/graphic/アパレルアルバイト/umie福袋2025.png" alt="" loading="lazy"></div>
+            <div class="wcard-cat">graphic design</div>
+            <div class="wcard-title">チラシ制作</div>
+          </div>
+          <div class="wcard" data-modal="modal-graphic-2">
+            <div class="wcard-thumb wcard-thumb-white"><img src="image/works/graphic/ロゴデザイン.png" alt="" loading="lazy"></div>
+            <div class="wcard-cat">graphic design</div>
+            <div class="wcard-title">ロゴデザイン</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid-section" id="grid-illustration">
+        <h3>illustration</h3>
+        <div class="wgrid">
+          <div class="wcard" data-modal="modal-illustration-1">
+            <div class="wcard-thumb"><img src="image/works/illustration/P丸様ファンアート.PNG" alt="" loading="lazy"></div>
+            <div class="wcard-cat">illustration</div>
+            <div class="wcard-title">P丸様。ファンアート</div>
+          </div>
+          <div class="wcard" data-modal="modal-illustration-2">
+            <div class="wcard-thumb"><img src="image/works/illustration/星野アイ二次創作.PNG" alt="" loading="lazy"></div>
+            <div class="wcard-cat">illustration</div>
+            <div class="wcard-title">星野アイ 二次創作</div>
+          </div>
+          <div class="wcard" data-modal="modal-linestamp">
+            <div class="wcard-thumb wcard-thumb-top"><img src="image/works/illustration/LINEスタンプ.PNG" alt="" loading="lazy"></div>
+            <div class="wcard-cat">illustration</div>
+            <div class="wcard-title">オリジナル LINE スタンプ</div>
+          </div>
+          <div class="wcard" data-modal="modal-illustration-3">
+            <div class="wcard-thumb"><img src="image/works/illustration/freedom一次創作.png" alt="" loading="lazy"></div>
+            <div class="wcard-cat">illustration</div>
+            <div class="wcard-title">freedom（一次創作）</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid-section" id="grid-drawing">
+        <h3>drawing</h3>
+        <div class="wgrid">
+          <div class="wcard" data-modal="modal-drawing">
+            <div class="wcard-thumb"><img src="image/works/drawing/スカラシップ.jpg" alt="" loading="lazy"></div>
+            <div class="wcard-cat">drawing</div>
+            <div class="wcard-title">drawing</div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- ================= 03 projects (card grid, click -> modal) ================= -->
+
+  <div class="view stage hidden" id="stage-projects">
+    <div class="stage-inner grid-page">
+      <span class="eyebrow">03 — projects</span>
+      <h2>projects</h2>
+
+      <div class="wgrid">
+        <div class="wcard" data-modal="modal-vtako" id="grid-vtako">
+          <div class="wcard-thumb"><img src="image/projects/Vタコ/Vたこサムネ.JPG" alt="" loading="lazy"></div>
+          <div class="wcard-cat">projects</div>
+          <div class="wcard-title">V たこ</div>
+        </div>
+        <div class="wcard" data-modal="modal-natsumatsuri" id="grid-natsumatsuri">
+          <div class="wcard-thumb"><img src="image/projects/夏祭り/夏祭りサムネ.jpg" alt="" loading="lazy"></div>
+          <div class="wcard-cat">projects</div>
+          <div class="wcard-title">学園都市夏祭り</div>
+        </div>
+        <div class="wcard" data-modal="modal-3f" id="grid-3f">
+          <div class="wcard-thumb"><video src="image/projects/三F/三Fアニメーションサムネ_web.mp4" muted autoplay loop preload="auto" playsinline></video></div>
+          <div class="wcard-cat">projects</div>
+          <div class="wcard-title">三F プロジェクト</div>
+        </div>
+        <div class="wcard" data-modal="modal-dance" id="grid-dance">
+          <div class="wcard-thumb"><img src="image/projects/dance_club/ダンス部サムネ.jpg" alt="" loading="lazy"></div>
+          <div class="wcard-cat">projects</div>
+          <div class="wcard-title">dance club</div>
+        </div>
+        <div class="wcard" data-modal="modal-sanninten" id="grid-sanninten">
+          <div class="wcard-thumb"><img src="image/projects/三人展/三人展サムネ.JPG" alt="" loading="lazy"></div>
+          <div class="wcard-cat">projects</div>
+          <div class="wcard-title">三人展</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= work detail modals ================= -->
+
+  <div class="modal-overlay" id="modal-web-1">
+    <div class="modal-box">
+      <button class="modal-close" data-modal-close type="button">×</button>
+      <span class="eyebrow">02 — works</span>
+      <h3 class="modal-title">みんなを守る！ウルトラマン ひっぱりだこ飯</h3>
+      <div class="meta">2026 ・ Photoshop / Unity / VSCode ・ 授業課題（WEBディレクション）</div>
+      <div class="media"><video src="image/works/WEB/site1_web.mp4" controls playsinline preload="metadata"></video></div>
+      <div class="block">
+        <p>神戸の駅弁、淡路屋の「ひっぱりだこ飯」の商品LP（PCサイト）をデザインしました。Photoshopでのデザイン課題でしたが、WEBとゲームを掛け合わせたいと思い、Unityでのゲーム開発からVSCodeでの実装まで独学で制作。ウルトラマンのカラータイマーやスペシウムビームといった設定と、「引っ張る」というひっぱりだこ飯の要素を組み合わせた企画にしました。ファーストビューからゲームまで、スクロールでシームレスに繋がるアニメーションを使用しています。</p>
+      </div>
+      <div class="hscroll">
+        <img src="image/works/WEB/site1%E8%AA%AC%E6%98%8E/柴田虹美_UI作品-01.png" alt="" loading="lazy">
+        <img src="image/works/WEB/site1%E8%AA%AC%E6%98%8E/柴田虹美_UI作品-02.png" alt="" loading="lazy">
+        <img src="image/works/WEB/site1%E8%AA%AC%E6%98%8E/柴田虹美_UI作品-03.png" alt="" loading="lazy">
+        <img src="image/works/WEB/site1%E8%AA%AC%E6%98%8E/柴田虹美_UI作品-04.png" alt="" loading="lazy">
+        <img src="image/works/WEB/site1%E8%AA%AC%E6%98%8E/柴田虹美_UI作品-05.png" alt="" loading="lazy">
+      </div>
+      <a class="link" href="https://nachi05-creator.github.io/ULTRAMAN-hipparidako/" target="_blank" rel="noopener">site ↗</a>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-web-2">
+    <div class="modal-box">
+      <button class="modal-close" data-modal-close type="button">×</button>
+      <span class="eyebrow">02 — works</span>
+      <h3 class="modal-title">TAIWAN CITY</h3>
+      <div class="meta">2026.1 ・ Photoshop ・ 授業課題（LPデザイン）</div>
+      <div class="media media-tall"><img src="image/works/WEB/site2.jpg" alt="TAIWAN CITY LP" loading="lazy"></div>
+      <div class="block">
+        <b>Concept</b>
+        <p>台湾で叶える、憧れのシティーガール体験。</p>
+      </div>
+      <div class="block">
+        <b>Idea</b>
+        <p>シティーガールに憧れる若年女性をターゲットに、レトロで洗練された街並みが魅力の台湾を紹介するLPを制作。台湾ならではのノスタルジックな雰囲気と都会的な魅力を掛け合わせ、旅行を通して理想のライフスタイルを体験できるプランとして提案しました。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-interactive-1">
+    <div class="modal-box">
+      <button class="modal-close" data-modal-close type="button">×</button>
+      <span class="eyebrow">02 — works</span>
+      <h3 class="modal-title">Improvised Continuum</h3>
+      <div class="meta">TouchDesigner</div>
+      <div class="media"><video src="image/works/interactive/ImprovisedContinuum_web.mp4" controls playsinline preload="metadata"></video></div>
+      <div class="block">
+        <p>人の動きで発生する空気の流れを可視化するインタラクティブアート作品です。その日偶然スタジオに来た人に曲を決めて流し、踊ってもらいました。人の動き、音、ビジュアルがすべて即興の連続になっています。次の段階ではDJを用意し、ストリートダンサーにダンスバトルやサイファーを行ってもらい、プロジェクターで床や壁にビジュアルを映し、唯一無二の瞬間を体験できる空間を作りたいと考えています。</p>
+      </div>
+      <a class="link" href="https://youtu.be/mMcqNcZkP5s?si=gCy1bNBumG7QuoDG" target="_blank" rel="noopener">movie ↗</a>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-interactive-2">
+    <div class="modal-box">
+      <button class="modal-close" data-modal-close type="button">×</button>
+      <span class="eyebrow">02 — works</span>
+      <h3 class="modal-title">VDJ</h3>
+      <div class="meta">2026 前期 ・ TouchDesigner ・ ゼミ最終課題</div>
+      <div class="media"><video src="image/works/interactive/VJ_shibata_web.mp4" controls playsinline preload="metadata"></video></div>
+      <div class="block">
+        <p>TouchDesignerでノードを組んだりプログラミングをして、音楽に合わせて映像がリアルタイムに動くシステムを制作しました。VJイベントで実際に使用しています。</p>
+      </div>
+      <a class="link" href="https://youtu.be/Ms4bQVbeQ7o?si=M7DBQENt_dHIudUZ" target="_blank" rel="noopener">movie ↗</a>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-pv-1">
+    <div class="modal-box">
+      <button class="modal-close" data-modal-close type="button">×</button>
+      <span class="eyebrow">02 — works</span>
+      <h3 class="modal-title">福崎町 プロモーションビデオ</h3>
+      <div class="meta">2025.12 ・ After Effects / Premiere Pro / SUNO AI ・ 授業課題（グループワーク）</div>
+      <div class="meta">担当：ディレクション・企画・編集・音楽・ナレーション</div>
+      <div class="media"><video src="image/works/PV/チームcherry_福崎町PV_完成版_web.mp4" controls playsinline preload="metadata"></video></div>
+      <div class="block">
+        <b>Concept</b>
+        <p>妖怪と巡る、福崎町の魅力発見。</p>
+      </div>
+      <div class="block">
+        <b>Idea</b>
+        <p>福崎町のご当地キャラクター「ガジロウ」が町を案内するPR映像を制作。辻川山公園の池とJR福崎駅前の「ガジロウチューブ」を地下トンネルで行き来するという公式設定に着目し、ガジロウが池から駅まで泳ぐ道中で観光スポットを紹介する構成としました。キャラクターの世界観を活かしながら、楽しんで町の魅力を知ってもらえる映像を目指しました。</p>
+      </div>
+      <a class="link" href="https://youtu.be/arahxZN-kSE" target="_blank" rel="noopener">movie ↗</a>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-pv-2">
+    <div class="modal-box">
+      <button class="modal-close" data-modal-close type="button">×</button>
+      <span class="eyebrow">02 — works</span>
+      <h3 class="modal-title">泉平企業ブースデザイン（企画デザイン）</h3>
+      <div class="media"><video src="image/works/PV/企画デザイン_クイズ_web.mp4" controls playsinline preload="metadata"></video></div>
+      <div class="block"><p>企業ブースの企画デザインを担当しました。</p></div>
+      <a class="link" href="https://youtu.be/_EKmDgEhg_M" target="_blank" rel="noopener">movie ↗</a>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-motion-1">
+    <div class="modal-box">
+      <button class="modal-close" data-modal-close type="button">×</button>
+      <span class="eyebrow">02 — works</span>
+      <h3 class="modal-title">将来の夢</h3>
+      <div class="meta">アドバンスドモーショングラフィックス（授業課題）</div>
+      <div class="media"><video src="image/works/motion%20graphics/将来の夢_web.mp4" controls playsinline preload="metadata"></video></div>
+      <div class="block">
+        <p>タイム・スライス／バレット・タイムを用いて、自己紹介動画「将来の夢」を制作する課題です。フォトグラメトリの機材は大学のものを使用。編集はAfter Effectsのロトブラシツールで写真を並べた動画の背景を切り抜きました。</p>
+      </div>
+      <a class="link" href="https://youtube.com/shorts/KAYOxDQlD2g" target="_blank" rel="noopener">movie ↗</a>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-motion-2">
+    <div class="modal-box">
+      <button class="modal-close" data-modal-close type="button">×</button>
+      <span class="eyebrow">02 — works</span>
+      <h3 class="modal-title">Step by Step</h3>
+      <div class="meta">アドバンスドモーショングラフィックス（授業課題）</div>
+      <div class="media"><video src="image/works/motion%20graphics/step%20by%20step_web.mp4" controls playsinline preload="metadata"></video></div>
+      <div class="block">
+        <p>グルーピング・アニメーション／マッチカットを用いて、普段納得がいかないこと・不満に思っていることをテーマにメッセージ性のある動画を制作しました。ダンスの部活で使っているスタジオのみを使用し、日にちや時間帯、服装を変えながら、カメラの位置をスタジオを1周するように変えていくことで時間の経過を表現。大学から始めたダンスで周りのように上手く踊れず劣等感を感じた経験から、才能がなくても時間をかければできなかったこともできるようになる、という応援のメッセージを込めました。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-motion-3">
+    <div class="modal-box">
+      <button class="modal-close" data-modal-close type="button">×</button>
+      <span class="eyebrow">02 — works</span>
+      <h3 class="modal-title">【実話】人生で体験したガチで怖かった話3選</h3>
+      <div class="meta">アドバンスドモーショングラフィックス（授業課題）</div>
+      <div class="media"><video src="image/works/motion%20graphics/【実話】人生で体験したガチで怖かった話3選~!!_web.mp4" controls playsinline preload="metadata"></video></div>
+      <div class="block">
+        <p>ナレーションから映像を作るという課題でした。口頭だけでは説明が難しいと感じていた、自分が実際に体験した怖い話を録音し、そこにアニメーションをつけて作品にしました。心霊体験など、視覚情報が追加されるだけで聞き手も想像しやすくなり、映像の大切さを改めて感じました。</p>
+      </div>
+      <a class="link" href="https://www.youtube.com/watch?v=fqxgJHiazXQ" target="_blank" rel="noopener">movie ↗</a>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-motion-4">
+    <div class="modal-box">
+      <button class="modal-close" data-modal-close type="button">×</button>
+      <span class="eyebrow">02 — works</span>
+      <h3 class="modal-title">Non-anthropocentric perspective</h3>
+      <div class="meta">アドバンスドモーショングラフィックス（授業課題） ・ ロトスコープ</div>
+      <div class="media"><video src="image/works/motion%20graphics/Non-anthropocentric%20perspective_web.mp4" controls playsinline preload="metadata"></video></div>
+      <div class="block">
+        <b>Concept</b>
+        <p>非人間視点のビジュアライズ。</p>
+      </div>
+      <div class="block">
+        <b>Idea</b>
+        <p>日常の1コマをモーショングラフィックス化させる映像制作課題で、ロトスコープを用いて制作しました。機械は私たち人間よりも多くの情報を処理していることがわかる、非人間視点の見え方をビジュアライズしています。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-motion-5">
+    <div class="modal-box">
+      <button class="modal-close" data-modal-close type="button">×</button>
+      <span class="eyebrow">02 — works</span>
+      <h3 class="modal-title">エビカニクス</h3>
+      <div class="meta">3DCG ・ MeshyAI / Adobe Mixamo</div>
+      <div class="media"><video src="image/works/motion%20graphics/エビカニクス_web.mp4" controls playsinline preload="metadata"></video></div>
+      <div class="block">
+        <b>Concept</b>
+        <p>3Dモデルを用いたリリックビデオ制作課題。</p>
+      </div>
+      <div class="block">
+        <b>Idea</b>
+        <p>MeshyAIとAdobe Mixamoを使用し、体調を崩したり体を悪くしてしまった先生を3Dモデルで踊らせて、早く元気になってほしいという思いで制作しました。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-3d-1">
+    <div class="modal-box">
+      <button class="modal-close" data-modal-close type="button">×</button>
+      <span class="eyebrow">02 — works</span>
+      <h3 class="modal-title">Wizard Clowns</h3>
+      <div class="meta">2024.9 ・ Blender ・ 授業課題（企画PV）</div>
+      <div class="media"><video src="image/works/3D/Wizard%20Clowns_web.mp4" controls playsinline preload="metadata"></video></div>
+      <div class="block">
+        <b>Concept</b>
+        <p>「魔法」×「サーカス」のエンターテインメントショー。</p>
+      </div>
+      <div class="block">
+        <b>Idea</b>
+        <p>魔法という非現実的な現象を、3DCGならではのリアルな空間表現によって描写。プロモーションの段階からサーカスの高揚感と融合させ、観客が本当に魔法を目の前で見ているような体験を目指しました。</p>
+      </div>
+      <a class="link" href="https://youtu.be/sWjBkXN8A_4" target="_blank" rel="noopener">movie ↗</a>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-3d-2">
+    <div class="modal-box">
+      <button class="modal-close" data-modal-close type="button">×</button>
+      <span class="eyebrow">02 — works</span>
+      <h3 class="modal-title">magic wand</h3>
+      <div class="meta">Blender</div>
+      <div class="media"><video src="image/works/3D/magic%20wand.mp4" controls playsinline preload="metadata"></video></div>
+      <div class="block">
+        <b>Concept</b>
+        <p>魔法のステッキ。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-graphic-1">
+    <div class="modal-box">
+      <button class="modal-close" data-modal-close type="button">×</button>
+      <span class="eyebrow">02 — works</span>
+      <h3 class="modal-title">チラシ制作</h3>
+      <div class="block">
+        <p>アパレルアルバイトで福袋やノベルティのチラシ、スタッフボードを制作しました。ブランドコンセプトに合うようなデザインを心がけました。</p>
+      </div>
+      <div class="hscroll">
+        <img src="image/works/graphic/アパレルアルバイト/umie福袋2025.png" alt="" loading="lazy">
+        <img src="image/works/graphic/アパレルアルバイト/umiestaffボード.png" alt="" loading="lazy">
+        <img src="image/works/graphic/アパレルアルバイト/umie.png" alt="" loading="lazy">
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-graphic-2">
+    <div class="modal-box">
+      <button class="modal-close" data-modal-close type="button">×</button>
+      <span class="eyebrow">02 — works</span>
+      <h3 class="modal-title">ロゴデザイン</h3>
+      <div class="meta">BAROQUE JAPAN ・ 企業ロゴ社内コンペティション</div>
+      <div class="media media-white"><img src="image/works/graphic/ロゴデザイン.png" alt="" loading="lazy"></div>
+      <div class="block">
+        <p>企業理念である「挑戦」〜バロック発の文化を世界に発信〜から、挑戦という意味の旗と翼をモチーフに取り入れました。旗の中には日本の日の丸と、企業名の頭文字のB・Jを組み合わせたロゴを配置。右斜め上に伸びる線は、売上が鰻登りになるようにという思いを込めています。上の星三つは、企業を支えている三つのブランドを表しています。結果は延期となり出ていませんが、良い経験となりました。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-illustration-1">
+    <div class="modal-box">
+      <button class="modal-close" data-modal-close type="button">×</button>
+      <span class="eyebrow">02 — works</span>
+      <h3 class="modal-title">P丸様。ファンアート</h3>
+      <div class="media"><img src="image/works/illustration/P丸様ファンアート.PNG" alt="" loading="lazy"></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-illustration-2">
+    <div class="modal-box">
+      <button class="modal-close" data-modal-close type="button">×</button>
+      <span class="eyebrow">02 — works</span>
+      <h3 class="modal-title">星野アイ 二次創作</h3>
+      <div class="media"><img src="image/works/illustration/星野アイ二次創作.PNG" alt="" loading="lazy"></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-linestamp">
+    <div class="modal-box">
+      <button class="modal-close" data-modal-close type="button">×</button>
+      <span class="eyebrow">02 — works</span>
+      <h3 class="modal-title">オリジナル LINE スタンプ</h3>
+      <div class="block">
+        <p>一万ダウンロード突破！しゃべる赤ちゃんをコンセプトに、可愛らしくクスッと笑えるようなスタンプを作りました。</p>
+      </div>
+      <div class="media media-tall"><img src="image/works/illustration/LINEスタンプ.PNG" alt="" loading="lazy"></div>
+      <a class="link" href="https://store.line.me/stickershop/product/25029976/ja" target="_blank" rel="noopener">LINE STORE ↗</a>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-illustration-3">
+    <div class="modal-box">
+      <button class="modal-close" data-modal-close type="button">×</button>
+      <span class="eyebrow">02 — works</span>
+      <h3 class="modal-title">freedom（一次創作）</h3>
+      <div class="media"><img src="image/works/illustration/freedom一次創作.png" alt="" loading="lazy"></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-drawing">
+    <div class="modal-box">
+      <button class="modal-close" data-modal-close type="button">×</button>
+      <span class="eyebrow">02 — works</span>
+      <h3 class="modal-title">drawing</h3>
+      <div class="media"><img src="image/works/drawing/スカラシップ.jpg" alt="" loading="lazy"></div>
+      <div class="block">
+        <b>スカラシップ試験</b>
+        <p>2024年度 神戸芸術工科大学スカラシップ試験合格（190点満点中186点）</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-vtako">
+    <div class="modal-box">
+      <button class="modal-close" data-modal-close type="button">×</button>
+      <span class="eyebrow">03 — projects</span>
+      <h3 class="modal-title">V たこ</h3>
+      <div class="meta">学科交流会「Vたこ」主催 ・ 2026.5 ・ 担当：代表・企画・運営</div>
+      <div class="media"><img src="image/projects/Vタコ/Vたこサムネ.JPG" alt="Vたこ" loading="lazy"></div>
+      <div class="block">
+        <b>Concept</b>
+        <p>学年を超えた交流の中で、「出会うべくして出会う偶然」を生み出す。</p>
+      </div>
+      <div class="block">
+        <b>Idea</b>
+        <p>参加者同士が自然に会話を始められるよう、オリジナルプロフィールカードを制作。カードに描かれたタコに、初対面の相手から足を書き足してもらう仕組みを導入しました。完成したタコはたこ焼き引換券となり、交流のきっかけづくりと参加促進を両立しています。ビジュアルデザイン学科だからこそできる、デザインやイラストを用いた企画で、学年関係なく交流ができる場を作りました。</p>
+      </div>
+      <div class="hscroll">
+        <img src="image/projects/Vタコ/インスタ_Vタコとは？/01.JPG" alt="" loading="lazy">
+        <img src="image/projects/Vタコ/インスタ_Vタコとは？/02.JPG" alt="" loading="lazy">
+        <img src="image/projects/Vタコ/インスタ_Vタコとは？/03.JPG" alt="" loading="lazy">
+        <img src="image/projects/Vタコ/インスタ_Vタコとは？/04.JPG" alt="" loading="lazy">
+        <img src="image/projects/Vタコ/インスタ_Vタコとは？/05.JPG" alt="" loading="lazy">
+        <img src="image/projects/Vタコ/インスタ_Vタコとは？/06.JPG" alt="" loading="lazy">
+        <img src="image/projects/Vタコ/インスタ_Vタコとは？/07.JPG" alt="" loading="lazy">
+      </div>
+      <div class="thumb-grid">
+        <img src="image/projects/Vタコ/IMG_5301.JPG" alt="" loading="lazy">
+        <img src="image/projects/Vタコ/IMG_6891.JPG" alt="" loading="lazy">
+        <img src="image/projects/Vタコ/IMG_9257.JPG" alt="" loading="lazy">
+        <img src="image/projects/Vタコ/LINE_ALBUM_20250718%20Vだこ_260205_11.jpg" alt="" loading="lazy">
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-natsumatsuri">
+    <div class="modal-box">
+      <button class="modal-close" data-modal-close type="button">×</button>
+      <span class="eyebrow">03 — projects</span>
+      <h3 class="modal-title">学園都市夏祭り</h3>
+      <div class="meta">2025.8 ・ ブース運営</div>
+      <div class="media"><img src="image/projects/夏祭り/夏祭りサムネ.jpg" alt="" loading="lazy"></div>
+      <div class="block"><p>神戸市学園都市駅のユニバードームで夏祭りのブースを運営しました。「くるくるレインボー」というおもちゃを子供たちと一緒に作るワークショップという案をだし、実際にスタッフとして準備やワークショップを行いました。</p></div>
+      <div class="thumb-grid">
+        <img src="image/projects/夏祭り/43602DE4-654D-4A62-84F7-0CA77B101562.jpg" alt="" loading="lazy">
+        <img src="image/projects/夏祭り/9B93562B-CF92-4EC7-9130-B63B431C3E03.jpg" alt="" loading="lazy">
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-3f">
+    <div class="modal-box">
+      <button class="modal-close" data-modal-close type="button">×</button>
+      <span class="eyebrow">03 — projects</span>
+      <h3 class="modal-title">三F プロジェクト</h3>
+      <div class="meta">三FプロジェクトPR動画 ・ 2025.4 ・ After Effects / Premiere Pro ・ 担当：監督・編集</div>
+      <div class="media"><video src="image/projects/三F/三Fアニメーションサムネ_web.mp4" controls playsinline preload="metadata"></video></div>
+      <div class="block">
+        <b>Concept</b>
+        <p>展示体験を映像で再構築し、街ゆく人の興味を引き出す。</p>
+      </div>
+      <div class="block">
+        <b>Idea</b>
+        <p>神戸三宮センター街の展示内容を映像化。風船が1階から3階へ移動する演出で視線を誘導し、吹き出し展示は立体的なモーショングラフィックスとして表現。実際の展示空間の魅力を、映像ならではの動きで伝えました。他にも三Fストリートの清掃や、展示、セレモニーも行いました。</p>
+      </div>
+      <a class="link" href="https://youtu.be/QAVfAVyVDQ4" target="_blank" rel="noopener">movie ↗</a>
+      <div class="thumb-grid">
+        <img src="image/projects/三F/IMG_5307.JPG" alt="" loading="lazy">
+        <img src="image/projects/三F/IMG_5308.JPG" alt="" loading="lazy">
+        <img src="image/projects/三F/IMG_5309.JPG" alt="" loading="lazy">
+        <img src="image/projects/三F/IMG_5311.JPG" alt="" loading="lazy">
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-dance">
+    <div class="modal-box">
+      <button class="modal-close" data-modal-close type="button">×</button>
+      <span class="eyebrow">03 — projects</span>
+      <h3 class="modal-title">dance club</h3>
+      <div class="meta">神戸芸術工科大学ダンス部「Leap Frog」</div>
+      <div class="media"><img src="image/projects/dance_club/ダンス部サムネ.jpg" alt="" loading="lazy"></div>
+      <div class="block">
+        <p>神戸芸術工科大学ダンス部「Leap Frog」での制作物を紹介します。</p>
+      </div>
+      <div class="block" style="margin-top:32px;">
+        <b>応援うちわ</b>
+        <p>関西1位のダンスサークルを競う「Z-1」というイベントで、コンテスト出場者には秘密で応援うちわを作りました。企画と進行を行い合計約20枚のうちわを手分けして制作しました。結果サプライズも成功し、コンテストに出場しない部員も一丸となって、無事コンテストの総合優勝を獲得することができました。左の画像が私がデザインを担当したうちわになっています。</p>
+      </div>
+      <div class="pair-grid">
+        <img src="image/projects/dance_club/uchiwa1_crop.jpg" alt="" loading="lazy">
+        <img src="image/projects/dance_club/uchiwa2_crop.jpg" alt="" loading="lazy">
+      </div>
+      <div class="block" style="margin-top:32px;">
+        <b>WINNER BOARD</b>
+        <p>Leap Frog 主催のイベント「ドス蛙」の2on2 バトルのWINNERBOARD を制作しました。3Dプリンターの利用や、アクリルへUV プリンターで印刷し、メディウムを使った表現など、世界に1つのオリジナルなWINNER BOARDに仕上がりました。メイキング映像は下の矢印からご覧ください。</p>
+        <a class="link" href="https://youtu.be/KFPgXuSsrzQ" target="_blank" rel="noopener">movie ↗</a>
+      </div>
+      <div class="media"><img src="image/projects/dance_club/Winner%20board.JPG" alt="" loading="lazy"></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-sanninten">
+    <div class="modal-box">
+      <button class="modal-close" data-modal-close type="button">×</button>
+      <span class="eyebrow">03 — projects</span>
+      <h3 class="modal-title">三人展</h3>
+      <div class="meta">2025.8</div>
+      <div class="media"><img src="image/projects/三人展/三人展サムネ.JPG" alt="" loading="lazy"></div>
+      <div class="block">
+        <b>展示</b>
+        <p>約20作品で展示スペースをデザインしました。北野坂の長い坂を登ってギャラリーに来てくださった人たちには、天使の輪の下で写真をとってもらい、「回復まほう」で体力を回復してもらう、という演出にしました。</p>
+      </div>
+      <div class="art-grid">
+        <div>
+          <img src="image/projects/三人展/cell〜傷を愛せるか〜.png" alt="" loading="lazy">
+          <h4>○ cell〜傷を愛せるか〜</h4>
+          <p>銀色に映る複数の自分は過去や多面性を表し、その傷を縫うように糸で複雑に結ばれている。ある瞬間の喪失感や深い悲しみ、想いも自分と向き合い、見つめ直すことで癒えていくのかもしれない。</p>
+        </div>
+        <div>
+          <img src="image/projects/三人展/filtur~Luna~.png" alt="" loading="lazy">
+          <h4>○ filter〜Luna〜</h4>
+          <p>光の当たり方によって見え方が異なる。黄色いフィルターの奥にある、スタッコで作られた凹凸に気づくことができなければ、それが月のクレーターであることに気づくことができない。この作品自体がfilterとなり本質に辿り着ける人を見極める。</p>
+        </div>
+      </div>
+      <div class="media" style="margin-top:24px;"><img src="image/projects/三人展/member.png" alt="member" loading="lazy"></div>
+    </div>
+  </div>
+
+  <!-- ================= 04 contact ================= -->
+
+  <div class="view stage hidden" id="stage-contact">
+    <div class="stage-inner">
+      <span class="eyebrow">04 — contact</span>
+      <h2>contact</h2>
+      <div class="block">
+        <b>Mail</b>
+        <p><a class="link" href="mailto:hgs.nana.s@gmail.com">hgs.nana.s@gmail.com</a></p>
+      </div>
+      <div class="block">
+        <b>Instagram</b>
+        <p><a class="link" href="https://www.instagram.com/5me__05/" target="_blank" rel="noopener">@5me__05 ↗</a></p>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ---------------- data ---------------- */
+const items = [
+  {cat:'web (ui)', hue:'#3B4A63', page:'stage-works', target:'grid-web', img:'image/_spiral_thumbs/web.jpg'},
+  {cat:'interactive art', hue:'#5B4B78', page:'stage-works', target:'grid-interactive', img:'image/_spiral_thumbs/interactive.jpg'},
+  {cat:'pv', hue:'#8A4A3A', page:'stage-works', target:'grid-pv', img:'image/_spiral_thumbs/pv.jpg'},
+  {cat:'motion graphics', hue:'#8A4A3A', page:'stage-works', target:'grid-motion', img:'image/_spiral_thumbs/motion.jpg'},
+  {cat:'3d', hue:'#3B6B63', page:'stage-works', target:'grid-3d', img:'image/_spiral_thumbs/3d.jpg'},
+  {cat:'graphic design', hue:'#96742E', page:'stage-works', target:'grid-graphic', img:'image/works/graphic/アパレルアルバイト/umie福袋2025.png'},
+  {cat:'illustration', hue:'#96742E', page:'stage-works', target:'grid-illustration', img:'image/works/illustration/P丸様ファンアート.PNG'},
+  {cat:'drawing', hue:'#96742E', page:'stage-works', target:'grid-drawing', img:'image/works/drawing/スカラシップ.jpg'},
+  {cat:'v たこ', hue:'#3B4A63', page:'stage-projects', target:'grid-vtako', img:'image/projects/Vタコ/Vたこサムネ.JPG'},
+  {cat:'夏祭り', hue:'#8A4A3A', page:'stage-projects', target:'grid-natsumatsuri', img:'image/projects/夏祭り/夏祭りサムネ.jpg'},
+  {cat:'三F', hue:'#5B4B78', page:'stage-projects', target:'grid-3f', img:'image/_spiral_thumbs/3f.jpg'},
+  {cat:'dance club', hue:'#3B6B63', page:'stage-projects', target:'grid-dance', img:'image/projects/dance_club/ダンス部サムネ.jpg'},
+  {cat:'三人展', hue:'#6B5B3B', page:'stage-projects', target:'grid-sanninten', img:'image/projects/三人展/三人展サムネ.JPG'},
+];
+
+/* ---------------- build spiral items ---------------- */
+const stage = document.getElementById('spiralStage');
+const N = items.length;
+const els = items.map((it, i) => {
+  const el = document.createElement('div');
+  el.className = 'item';
+  el.innerHTML = `<div class="swatch" style="background:${it.hue}"><img src="${it.img}" alt="" loading="lazy"><span class="idx">0${i+1}</span><span class="cat">${it.cat}</span></div>`;
+  el.addEventListener('click', () => {
+    const groupName = it.page === 'stage-works' ? 'works' : it.page === 'stage-projects' ? 'projects' : null;
+    if(groupName) revealSidebarFor(groupName);
+    openStageAndScrollTo(it.page, it.target);
+  });
+  stage.appendChild(el);
+  return el;
+});
+
+/* ---------------- continuous rotation + vertical climb + wheel-driven spacing ---------------- */
+let rotation = 0;          /* radians, increases every frame -> perpetual motion */
+let spacing = 115;         /* vertical pitch between spiral loops, wheel-controlled */
+let climb = 0;             /* px, increases every frame -> perpetual upward climb */
+/* keep N*spacing comfortably taller than the viewport so the wrap seam (where a
+   card reappears at the bottom) stays off-screen -- it should only be visible
+   right as a card scrolls from top back around to the bottom, never mid-screen */
+const SPACING_MIN = 100, SPACING_MAX = 150;
+const ROT_SPEED = 0.0016;  /* radians per ms */
+const CLIMB_SPEED = 0.022; /* px per ms, upward drift */
+const EDGE_FADE = 70;      /* px, fade zone at top/bottom of the wrap loop */
+
+function renderSpiral(){
+  const cx = window.innerWidth * 0.62;
+  const cy = window.innerHeight * 0.5;
+  const radiusX = Math.min(280, window.innerWidth * 0.22);
+  const wrapSpan = N * spacing;
+
+  els.forEach((el, i) => {
+    const theta = rotation + i * (Math.PI * 2 / N) * 2.4;
+    const z = Math.cos(theta);                 /* -1..1 depth */
+    const x = cx + Math.sin(theta) * radiusX;
+
+    /* climb upward forever, wrapping back in from the bottom (spiral staircase) */
+    const rawY = (i - N / 2) * spacing - climb;
+    const wrappedY = ((rawY % wrapSpan) + wrapSpan) % wrapSpan - wrapSpan / 2;
+    const y = cy + wrappedY + Math.sin(theta * 0.5) * 14;
+
+    const scale = 0.62 + 0.4 * ((z + 1) / 2);
+    const edgeFade = Math.min(1, (wrapSpan / 2 - Math.abs(wrappedY)) / EDGE_FADE);
+    const opacity = (0.55 + 0.45 * ((z + 1) / 2)) * Math.max(0, edgeFade);
+
+    el.style.transform = `translate(${x}px, ${y}px) translate(-50%,-50%) scale(${scale})`;
+    el.style.zIndex = Math.round(z * 100);
+    el.style.opacity = opacity;
+  });
+}
+
+let lastT = performance.now();
+function frame(t){
+  const dt = t - lastT; lastT = t;
+  rotation += ROT_SPEED * dt;
+  climb += CLIMB_SPEED * dt;
+  renderSpiral();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+window.addEventListener('resize', renderSpiral);
+
+/* ---------------- reveal the sidebar, optionally opening + highlighting one group ---------------- */
+let sidebarRevealed = false;
+function revealSidebar(){
+  sidebarRevealed = true;
+  document.getElementById('sidebar').classList.add('show');
+  document.getElementById('heroLeft').classList.add('shift');
+  document.getElementById('menuBtn').classList.add('open');
+  document.body.classList.add('sidebar-open');
+}
+function revealSidebarFor(groupName){
+  revealSidebar();
+  document.querySelectorAll('.nav-group[data-group]').forEach(g => {
+    g.classList.toggle('open', g.dataset.group === groupName);
+  });
+}
+
+/* ---------------- wheel: adjust spacing + reveal sidebar on first use (hero only) ---------------- */
+window.addEventListener('wheel', (e) => {
+  const heroActive = !document.getElementById('hero').classList.contains('hidden');
+  if(!heroActive) return; /* scrolling other pages must never touch the menu or spiral */
+  spacing = Math.max(SPACING_MIN, Math.min(SPACING_MAX, spacing + e.deltaY * 0.12));
+  if(!sidebarRevealed) revealSidebar();
+}, {passive:true});
+
+/* ---------------- hamburger toggle (manual open/close) ---------------- */
+const menuBtn = document.getElementById('menuBtn');
+const markEl = document.getElementById('mark');
+const sidebarEl = document.getElementById('sidebar');
+const heroLeftEl = document.getElementById('heroLeft');
+menuBtn.addEventListener('click', () => {
+  const isOpen = sidebarEl.classList.toggle('show');
+  menuBtn.classList.toggle('open', isOpen);
+  heroLeftEl.classList.toggle('shift', isOpen);
+  document.body.classList.toggle('sidebar-open', isOpen);
+  sidebarRevealed = isOpen;
+});
+
+/* ---------------- profile page: overlay on top of hero, hero stays visible ---------------- */
+const profilePage = document.getElementById('profile-page');
+function openProfileAndScrollTo(targetId){
+  const alreadyOpen = profilePage.classList.contains('active');
+  if(!alreadyOpen){
+    document.querySelectorAll('.stage').forEach(s => s.classList.add('hidden'));
+    document.getElementById('hero').classList.remove('hidden');
+    closeModal();
+    profilePage.classList.add('active');
+    heroLeftEl.classList.add('raised');
+  }
+  const el = document.getElementById(targetId);
+  if(el) requestAnimationFrame(() => el.scrollIntoView({ behavior: alreadyOpen ? 'smooth' : 'auto', block: 'start' }));
+}
+function closeProfile(){
+  profilePage.classList.remove('active');
+  heroLeftEl.classList.remove('raised');
+}
+
+/* ---------------- stage navigation (SPA-style view swap) ---------------- */
+function openStage(id){
+  closeProfile();
+  closeModal();
+  document.querySelectorAll('.stage').forEach(s => s.classList.add('hidden'));
+  document.getElementById('hero').classList.add('hidden');
+  document.getElementById(id).classList.remove('hidden');
+  document.getElementById(id).scrollTop = 0;
+}
+function closeStage(){
+  document.querySelectorAll('.stage').forEach(s => s.classList.add('hidden'));
+  document.getElementById('hero').classList.remove('hidden');
+  closeProfile();
+  closeModal();
+}
+function openStageAndScrollTo(pageId, sectionId){
+  const alreadyOpen = pageId && !document.getElementById(pageId).classList.contains('hidden');
+  if(!alreadyOpen) openStage(pageId);
+  const el = document.getElementById(sectionId);
+  if(el) requestAnimationFrame(() => el.scrollIntoView({ behavior: alreadyOpen ? 'smooth' : 'auto', block: 'start' }));
+}
+function goToPage(page, target){
+  if(page === 'profile') openProfileAndScrollTo(target);
+  else openStageAndScrollTo(page, target);
+}
+
+/* ---------------- accordion submenus: toggle open AND jump to that category's top ---------------- */
+document.querySelectorAll('.nav-group[data-group]').forEach(group => {
+  group.querySelector('.head').addEventListener('click', () => {
+    const willOpen = !group.classList.contains('open');
+    document.querySelectorAll('.nav-group[data-group]').forEach(g => g.classList.remove('open'));
+    if(willOpen) group.classList.add('open');
+    if(group.dataset.page) goToPage(group.dataset.page, group.dataset.top);
+  });
+});
+
+document.querySelectorAll('a[data-target]').forEach(a => {
+  a.addEventListener('click', (e) => {
+    e.preventDefault();
+    goToPage(a.dataset.page, a.dataset.target);
+  });
+});
+document.querySelectorAll('.nav-group.contact-row').forEach(row => {
+  row.addEventListener('click', () => openStage(row.dataset.target));
+});
+document.querySelectorAll('[data-back]').forEach(b => b.addEventListener('click', closeStage));
+markEl.addEventListener('click', (e) => { if(e.target === markEl || e.target.classList.contains('wordmark')){ closeStage(); } });
+
+/* ---------------- work / project detail modals ---------------- */
+function openModal(id){
+  const m = document.getElementById(id);
+  if(!m) return;
+  m.classList.add('active');
+  m.querySelectorAll('video').forEach(v => {
+    v.muted = false;
+    v.currentTime = 0;
+    v.play().catch(() => {});
+  });
+}
+function closeModal(){
+  document.querySelectorAll('.modal-overlay.active').forEach(m => {
+    m.classList.remove('active');
+    m.querySelectorAll('video').forEach(v => { v.pause(); v.muted = true; });
+  });
+}
+document.querySelectorAll('.wcard[data-modal]').forEach(card => {
+  card.addEventListener('click', () => openModal(card.dataset.modal));
+});
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', (e) => { if(e.target === overlay) closeModal(); });
+  overlay.querySelector('[data-modal-close]').addEventListener('click', closeModal);
+});
+
+/* ---------------- scroll-spy: highlight current works/projects category in sidebar ---------------- */
+function setupScrollSpy(containerId, sectionSelector, pageKey){
+  const containerEl = document.getElementById(containerId);
+  const sections = containerEl.querySelectorAll(sectionSelector);
+  if(!sections.length) return;
+  const links = document.querySelectorAll(`.sidebar a[data-page="${pageKey || containerId}"]`);
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if(entry.isIntersecting){
+        links.forEach(l => l.classList.toggle('current', l.dataset.target === entry.target.id));
+      }
+    });
+  }, { root: containerEl, rootMargin: '-40% 0px -55% 0px', threshold: 0 });
+  sections.forEach(s => observer.observe(s));
+}
+setupScrollSpy('stage-works', '.grid-section');
+setupScrollSpy('stage-projects', '.wcard[id^="grid-"]');
+setupScrollSpy('profile-page', '.profile-section', 'profile');
+</script>
+</body>
+</html>

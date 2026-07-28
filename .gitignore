@@ -1,0 +1,26 @@
+.DS_Store
+
+# Raw / editing-source files not used on the published site
+*.psd
+*.heic
+*.HEIC
+
+# Original high-resolution video sources — the *_web.mp4 versions
+# next to each of these are what the site actually loads.
+image/works/interactive/ImprovisedContinuum.mp4
+image/works/WEB/site1.mov
+image/works/interactive/VJ_shibata.mp4
+image/works/motion graphics/step by step.mp4
+image/works/PV/チームcherry_福崎町PV_完成版.mp4
+image/works/3D/Magic Wand.MOV
+image/works/motion graphics/エビカニクス.mp4
+image/works/PV/企画デザイン_クイズ.mp4
+image/works/motion graphics/【実話】人生で体験したガチで怖かった話3選~!!.mp4
+image/works/motion graphics/Non-anthropocentric perspective.MP4
+image/works/motion graphics/将来の夢.mp4
+image/projects/三F/三Fアニメーションサムネ.MP4
+image/works/3D/Wizard Clowns.MOV
+
+# scratch / unused
+image/profile/GX013284.MP4
+.claude/
