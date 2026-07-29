@@ -1245,17 +1245,47 @@ function revealSidebarFor(groupName){
   });
 }
 
-/* ---------------- wheel: adjust spacing + reveal sidebar, first view only ---------------- */
-window.addEventListener('wheel', (e) => {
+/* ---------------- wheel/touch: adjust spacing + reveal sidebar, first view only ----------------
+   deltas are batched into a single rAF-scheduled update instead of writing styles on every raw
+   event -- a fast trackpad/touch flick can fire dozens of wheel/touchmove events per frame, and
+   writing el.style.transform on every one of them is what was causing Chrome to intermittently
+   fail to paint the spiral cards (and eventually sibling fixed elements) during active scrolling. */
+let pendingDelta = 0;
+let rafScheduled = false;
+function applyPendingDelta(){
+  rafScheduled = false;
+  const d = pendingDelta;
+  pendingDelta = 0;
+  spacing = Math.max(SPACING_MIN, Math.min(SPACING_MAX, spacing + d * 0.12));
+  rotation += d * ROT_PER_DELTA;
+  climb += d * CLIMB_PER_DELTA;
+  renderSpiral();
+  if(!sidebarRevealed) revealSidebar();
+}
+function queueSpiralDelta(deltaY){
   const heroActive = !document.getElementById('hero').classList.contains('hidden');
   if(!heroActive) return; /* scrolling other pages must never touch the menu or spiral */
   if(profilePage.classList.contains('active')) return; /* scrolling the profile panel must stay on the first view, no menu */
-  spacing = Math.max(SPACING_MIN, Math.min(SPACING_MAX, spacing + e.deltaY * 0.12));
-  rotation += e.deltaY * ROT_PER_DELTA;
-  climb += e.deltaY * CLIMB_PER_DELTA;
-  renderSpiral();
-  if(!sidebarRevealed) revealSidebar();
+  pendingDelta += deltaY;
+  if(!rafScheduled){ rafScheduled = true; requestAnimationFrame(applyPendingDelta); }
+}
+window.addEventListener('wheel', (e) => { queueSpiralDelta(e.deltaY); }, {passive:true});
+
+/* touch devices never fire wheel events -- without this, swiping on the first view did nothing
+   (spiral frozen, sidebar never reveals), which read as "scrolling doesn't work" on mobile. */
+let touchStartY = null;
+window.addEventListener('touchstart', (e) => {
+  const heroActive = !document.getElementById('hero').classList.contains('hidden');
+  if(!heroActive){ touchStartY = null; return; }
+  touchStartY = e.touches[0].clientY;
 }, {passive:true});
+window.addEventListener('touchmove', (e) => {
+  if(touchStartY === null) return;
+  const y = e.touches[0].clientY;
+  queueSpiralDelta((touchStartY - y) * 2.2);
+  touchStartY = y;
+}, {passive:true});
+window.addEventListener('touchend', () => { touchStartY = null; }, {passive:true});
 
 /* ---------------- hamburger toggle (manual open/close) ---------------- */
 const menuBtn = document.getElementById('menuBtn');
