@@ -12,8 +12,10 @@ function revealSidebar(){
   document.getElementById('menuBtn').classList.add('open');
   document.body.classList.add('sidebar-open');
 }
+/* mobile users open the menu deliberately by tapping the hamburger; auto-popping a drawer
+   over content they haven't scrolled to yet is more useful as a discovery hint on PC. */
 window.addEventListener('scroll', () => {
-  if(!autoRevealed && window.scrollY > 40) revealSidebar();
+  if(!autoRevealed && window.innerWidth > 1024 && window.scrollY > 40) revealSidebar();
 }, {passive:true});
 
 /* ---------------- hamburger toggle (manual open/close) ---------------- */
