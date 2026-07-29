@@ -38,7 +38,6 @@
     background:var(--paper);
     padding:10px;
     border-radius:4px;
-    will-change:transform; /* keep this on its own compositor layer -- otherwise Chrome can fail to repaint fixed elements after a distant sibling scrolls far */
   }
   .mark .wordmark{ white-space:nowrap; }
   .menu-btn{
@@ -51,7 +50,6 @@
     background:var(--paper);
     padding:10px;
     border-radius:4px;
-    will-change:transform;
   }
   .menu-btn .bars{ display:flex; flex-direction:column; gap:3px; }
   .menu-btn .bars span{ width:14px; height:1px; background:var(--ink); transition:transform .3s ease, opacity .3s ease; }
@@ -59,25 +57,28 @@
   .menu-btn.open .bars span:nth-child(2){ opacity:0; }
   .menu-btn.open .bars span:nth-child(3){ transform:translateY(-4px) rotate(-45deg); }
 
-  /* ---------- hero: tall scroll-linked section, title pinned via sticky while spiral animates ---------- */
+  /* ---------- hero: a single static viewport-height section, no scroll-driven JS at all ----------
+     everything here is plain CSS (flex layout + hover transitions). Every previous incarnation of
+     this hero -- a perpetual rAF loop, wheel-hijacking, scroll-progress-driven transforms -- ended
+     up causing Chrome to intermittently fail to repaint after enough scrolling. The common factor
+     was always "JS rewriting el.style.transform on many elements in response to scroll/animation
+     frames", so this version simply doesn't do that: the cards are laid out once and never touched
+     by JS again. */
   .hero{
     position:relative;
-    height:130vh;
-  }
-  .hero-sticky{
-    position:sticky; top:0; left:0;
-    height:100vh;
-    overflow:hidden;
+    min-height:100vh;
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap;
+    gap:48px;
+    padding:130px 8vw 80px;
   }
 
   .hero-left{
     --tx:0px;
-    position:absolute; left:40px; top:50%;
-    transform:translate(var(--tx),-50%);
+    transform:translateX(var(--tx));
     transition:transform .55s cubic-bezier(.16,.8,.3,1);
-    z-index:10;
     display:flex; flex-direction:column; gap:26px;
-    max-width:60vw;
+    flex:1 1 320px;
+    max-width:480px;
   }
   .hero-left.shift{ --tx:var(--title-shift); }
   .title-block{ flex:none; }
@@ -108,14 +109,10 @@
   }
   @keyframes sweep{ 0%{transform:translateX(-100%);} 50%{transform:translateX(0);} 100%{transform:translateX(100%);} }
 
-  /* ---------- profile section (normal in-flow content right after the hero) ----------
-     pulled up with a negative margin so its top slides over the tail of the pinned spiral
-     instead of waiting for a hard cut -- the two are meant to overlap briefly while scrolling. */
+  /* ---------- profile section (normal in-flow content right after the hero) ---------- */
   .profile-wrap{
-    position:relative; z-index:3;
-    max-width:680px; margin:-22vh auto 0;
-    padding:70px 8vw 120px;
-    background:var(--paper);
+    max-width:680px; margin:0 auto;
+    padding:20px 8vw 120px;
   }
   .profile-wrap > .eyebrow{ display:block; font-size:10.5px; letter-spacing:0.28em; text-transform:uppercase; color:var(--mute); margin-bottom:20px; }
   .profile-section{ scroll-margin-top:110px; }
@@ -142,7 +139,6 @@
     z-index:60;
     display:flex; flex-direction:column; gap:6px;
     overflow-y:auto;
-    will-change:transform;
   }
   .sidebar.show{ transform:translateX(0); }
 
@@ -185,48 +181,46 @@
 
   .nav-group.contact-row{ cursor:pointer; }
 
-  /* ---------- spiral gallery ---------- */
-  .spiral-stage{
-    position:absolute; inset:0;
-    z-index:2;
-    perspective:1400px;
-  }
-  .item{
-    position:absolute;
-    width:172px; height:224px;
-    border-radius:2px;
-    overflow:hidden;
-    box-shadow:0 18px 40px rgba(20,20,20,0.10);
-    cursor:pointer;
-    will-change:transform;
-  }
-  .item .swatch{
+  /* ---------- intro-wrap: hero + profile share one background image ----------
+     a still frame, not a live video: at large/high-DPI viewports (confirmed by testing at
+     1920x1080 @2x) an autoplaying <video> here reliably failed to composite -- DOM/layout stayed
+     provably correct (position, opacity, color all reported fine) but huge areas of the page just
+     didn't paint, exactly like every other "invisible element" bug fought this session, this time
+     traced to the video decoder/compositor rather than JS. A plain <img> has never once shown this
+     failure anywhere on this site, at any size, so the background is now static. It's a normal
+     absolutely-positioned layer inside a normal-flow, static-height wrapper -- no position:fixed,
+     no JS ever touches it, it just scrolls away with the page once the user reaches "works". Text
+     colors are re-themed to light values (scoped via custom properties) so everything stays
+     legible over the image. */
+  .intro-wrap{
     position:relative;
+    overflow:hidden;
+    background:#050608;
+    --ink:#ffffff;
+    --mute:#c7c7c7;
+    --line:rgba(255,255,255,0.28);
+    color:var(--ink); /* elements below that don't declare their own `color` (e.g. h1) inherit
+                          plain black from <body> otherwise -- redefining the custom property
+                          alone doesn't reach them, only re-declaring `color` here does */
+  }
+  .intro-bg{
+    position:absolute; inset:0;
     width:100%; height:100%;
-    display:flex; align-items:flex-end;
-    padding:14px;
-    filter:grayscale(1) contrast(0.94);
-    transition:filter .5s ease;
+    object-fit:cover;
+    z-index:0;
   }
-  .item:hover .swatch{ filter:grayscale(0) contrast(1); }
-  .item .swatch img{
-    position:absolute; inset:0; z-index:0;
-    width:100%; height:100%; object-fit:cover;
+  .intro-wrap::after{
+    content:"";
+    position:absolute; inset:0;
+    z-index:1;
+    background:linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.15) 40%, rgba(0,0,0,0.55) 100%);
+    pointer-events:none;
   }
-  .item .swatch::before{
-    content:""; position:absolute; inset:0; z-index:1;
-    background:linear-gradient(to top, rgba(10,10,10,0.55), transparent 62%);
-  }
-  .item .cat{
-    position:relative; z-index:2;
-    font-family:'Fraunces',serif; font-style:italic;
-    font-size:11.5px; color:#fff; letter-spacing:0.02em;
-    text-shadow:0 1px 6px rgba(0,0,0,0.3);
-  }
-  .item .idx{
-    position:absolute; z-index:2; top:12px; right:14px;
-    font-size:9.5px; color:rgba(255,255,255,0.85); letter-spacing:0.1em;
-  }
+  .intro-wrap .hero, .intro-wrap .profile-wrap{ position:relative; z-index:2; }
+  .intro-wrap .panel-media{ background:#1c1d1f; }
+  .intro-wrap .hero-left, .intro-wrap .profile-wrap{ text-shadow:0 2px 16px rgba(0,0,0,0.55); }
+  .intro-wrap .title-block .hint span{ background:rgba(255,255,255,0.3); }
+  .intro-wrap .skill-tags span{ border-color:var(--line); }
 
   /* ---------- content sections (normal in-flow blocks, part of the one scrolling page) ---------- */
   .stage{
@@ -321,7 +315,6 @@
     border:1px solid var(--line);
     box-shadow:0 14px 30px rgba(20,20,20,0.07), 0 2px 8px rgba(20,20,20,0.05);
     transition:box-shadow .35s ease, transform .35s ease;
-    will-change:transform;
   }
   .wcard:hover{ box-shadow:0 20px 40px rgba(20,20,20,0.12), 0 4px 10px rgba(20,20,20,0.06); transform:translateY(-3px); }
   .wcard-thumb{
@@ -349,7 +342,6 @@
     opacity:0; pointer-events:none;
     transition:opacity .35s ease;
     padding:40px 20px;
-    will-change:transform;
   }
   .modal-overlay.active{ opacity:1; pointer-events:auto; }
   .modal-box{
@@ -383,13 +375,13 @@
     .nav-group .chev{ font-size:10px; }
     .nav-group ul a{ font-size:10px; padding:5px 0 5px 14px; line-height:1.4; }
     .nav-group ul a:hover, .nav-group ul a.current{ padding-left:18px; }
-    .hero-left{ left:24px; max-width:70vw; }
+    .hero-left{ max-width:70vw; }
     .stage{ padding:100px 6vw 100px; }
     .modal-box{ padding:44px 24px 32px; }
   }
   /* ---------- phone only: collapse the two-column grids to one ---------- */
   @media (max-width:480px){
-    .item{ width:120px; height:158px; }
+    .hero{ padding-top:110px; }
     .wgrid{ grid-template-columns:1fr; }
     .art-grid, .pair-grid{ grid-template-columns:1fr; }
   }
@@ -449,8 +441,10 @@
     </div>
   </nav>
 
-  <section class="hero" id="hero">
-    <div class="hero-sticky">
+  <div class="intro-wrap">
+    <img class="intro-bg" src="image/_hero_bg/vdj_bg.jpg" alt="" fetchpriority="high">
+
+    <section class="hero" id="hero">
       <div class="hero-left" id="heroLeft">
         <div class="title-block" id="titleBlock">
           <div class="eyebrow">ui / interactive / graphic</div>
@@ -458,13 +452,11 @@
           <div class="hint">scroll to explore<span></span></div>
         </div>
       </div>
-      <div class="spiral-stage" id="spiralStage"></div>
-    </div>
-  </section>
+    </section>
 
-  <!-- ================= 01 profile ================= -->
+    <!-- ================= 01 profile ================= -->
 
-  <section class="profile-wrap" id="profile-page">
+    <section class="profile-wrap" id="profile-page">
     <span class="eyebrow">01 — profile</span>
 
     <section class="profile-section" id="section-about">
@@ -514,7 +506,8 @@
         </ul>
       </div>
     </section>
-  </section>
+    </section>
+  </div>
 
   <!-- ================= 02 works (card grid, click -> modal) ================= -->
 
@@ -1147,71 +1140,12 @@
   </div>
 
 <script>
-/* ---------------- data ---------------- */
-const items = [
-  {cat:'web (ui)', hue:'#3B4A63', target:'grid-web', img:'image/_spiral_thumbs/web.jpg'},
-  {cat:'graphic design', hue:'#96742E', target:'grid-graphic', img:'image/_spiral_thumbs/graphic.jpg'},
-  {cat:'interactive art', hue:'#5B4B78', target:'work-vdj', img:'image/_spiral_thumbs/vdj.jpg'},
-  {cat:'v たこ', hue:'#3B4A63', target:'grid-vtako', img:'image/_spiral_thumbs/vtako.jpg'},
-];
-
-/* ---------------- build spiral items ---------------- */
-const spiralStageEl = document.getElementById('spiralStage');
-const N = items.length;
-const els = items.map((it, i) => {
-  const el = document.createElement('div');
-  el.className = 'item';
-  el.innerHTML = `<div class="swatch" style="background:${it.hue}"><img src="${it.img}" alt="" fetchpriority="high"><span class="idx">0${i+1}</span><span class="cat">${it.cat}</span></div>`;
-  el.addEventListener('click', () => { scrollToSection(it.target); });
-  spiralStageEl.appendChild(el);
-  return el;
-});
-
-/* ---------------- rotation + vertical climb, driven by how far the page has scrolled through the hero ---------------- */
-let rotation = 0;
-let spacing = 115;         /* vertical pitch between spiral loops */
-let climb = 0;              /* px */
-/* keep N*spacing comfortably taller than the viewport so the wrap seam (where a
-   card reappears at the bottom) stays off-screen -- it should only be visible
-   right as a card scrolls from top back around to the bottom, never mid-screen */
-const SPACING_MIN = 100, SPACING_MAX = 150;
-const ROTATION_TOTAL = Math.PI * 2 * 2.2;   /* total radians spun across the hero's whole scroll span */
-const CLIMB_TOTAL = 900;                    /* total px climbed across the hero's whole scroll span */
-const EDGE_FADE = 70;      /* px, fade zone at top/bottom of the wrap loop */
-
-function renderSpiral(){
-  const cx = window.innerWidth * 0.62;
-  const cy = window.innerHeight * 0.5;
-  const radiusX = Math.min(280, window.innerWidth * 0.22);
-  const wrapSpan = N * spacing;
-
-  els.forEach((el, i) => {
-    const theta = rotation + i * (Math.PI * 2 / N) * 2.4;
-    const z = Math.cos(theta);                 /* -1..1 depth */
-    const x = cx + Math.sin(theta) * radiusX;
-
-    /* climb upward, wrapping back in from the bottom (spiral staircase) */
-    const rawY = (i - N / 2) * spacing - climb;
-    const wrappedY = ((rawY % wrapSpan) + wrapSpan) % wrapSpan - wrapSpan / 2;
-    const y = cy + wrappedY + Math.sin(theta * 0.5) * 14;
-
-    const scale = 0.62 + 0.4 * ((z + 1) / 2);
-    const edgeFade = Math.min(1, (wrapSpan / 2 - Math.abs(wrappedY)) / EDGE_FADE);
-    const opacity = (0.55 + 0.45 * ((z + 1) / 2)) * Math.max(0, edgeFade);
-
-    el.style.transform = `translate(${x}px, ${y}px) translate(-50%,-50%) scale(${scale})`;
-    const zi = Math.round(z * 100);
-    if(el._lastZ !== zi){ el.style.zIndex = zi; el._lastZ = zi; }
-    el.style.opacity = opacity;
-  });
-}
-
-/* ---------------- reveal the sidebar on first scroll, once, ever ----------------
+/* ---------------- reveal the sidebar once, the first time the user scrolls down a little ----------------
    `autoRevealed` is separate from the sidebar's actual open/closed state on purpose: it only
-   guards the one-time auto-open triggered by scrolling past the hero. If it were the same flag
-   the manual hamburger toggle wrote to, closing the menu anywhere below the hero and then
-   scrolling even slightly would flip it back to "not revealed" and the scroll listener (which
-   runs on every scroll on the page, not just the hero) would immediately pop it open again. */
+   guards this one-time auto-open. If it were the same flag the manual hamburger toggle writes to,
+   closing the menu anywhere on the page and then scrolling even slightly would flip it back to
+   "not revealed" and immediately pop it open again -- this is a plain threshold check on
+   window.scrollY, not tied to any element's position, so it can't misfire once it has fired. */
 let autoRevealed = false;
 function revealSidebar(){
   autoRevealed = true;
@@ -1220,37 +1154,9 @@ function revealSidebar(){
   document.getElementById('menuBtn').classList.add('open');
   document.body.classList.add('sidebar-open');
 }
-
-/* ---------------- everything below is driven by the page's own native scroll position ----------------
-   the site used to be a set of position:fixed panels, each with its own internal overflow-y:auto
-   scroll container, with the spiral hero animated by hijacking wheel/touch events by hand. That
-   combination is exactly the pattern Chrome's compositor was intermittently failing to repaint
-   (menu/text/cards going invisible after scrolling), and on mobile the hand-rolled wheel-only
-   animation meant touch scrolling did nothing at all on the first view. Using one normal
-   top-to-bottom document with a single position:sticky hero avoids both problems: scrolling is
-   100% native (works identically with mouse wheel, trackpad, touch, keyboard), and the spiral's
-   rotation/climb is simply a function of how far window.scrollY has moved through the hero. */
-const heroEl = document.getElementById('hero');
-let scrollRafScheduled = false;
-function updateOnScroll(){
-  scrollRafScheduled = false;
-  const total = Math.max(1, heroEl.offsetHeight - window.innerHeight);
-  const scrolled = Math.min(Math.max(-heroEl.getBoundingClientRect().top, 0), total);
-  const progress = scrolled / total; /* 0 at top of hero, 1 once fully scrolled past it */
-
-  rotation = progress * ROTATION_TOTAL;
-  climb = progress * CLIMB_TOTAL;
-  spacing = SPACING_MIN + (SPACING_MAX - SPACING_MIN) * Math.min(1, progress * 2);
-  renderSpiral();
-
-  if(progress > 0.02 && !autoRevealed) revealSidebar();
-}
 window.addEventListener('scroll', () => {
-  if(!scrollRafScheduled){ scrollRafScheduled = true; requestAnimationFrame(updateOnScroll); }
+  if(!autoRevealed && window.scrollY > 40) revealSidebar();
 }, {passive:true});
-window.addEventListener('resize', () => { renderSpiral(); updateOnScroll(); });
-renderSpiral();
-updateOnScroll();
 
 /* ---------------- hamburger toggle (manual open/close) ---------------- */
 const menuBtn = document.getElementById('menuBtn');
@@ -1298,7 +1204,12 @@ markEl.addEventListener('click', (e) => {
   }
 });
 
-/* ---------------- wcard thumb videos: only load/play while on screen ---------------- */
+/* ---------------- wcard thumb videos: only decode/play the one on screen ----------------
+   there are 25 of these on one long page. A 200px rootMargin meant several could be decoding
+   at once on a fast scroll, and mobile Safari has a hard cap on simultaneous hardware video
+   decoders -- blowing past it is a likely contributor to the tab crashing on real devices.
+   0px margin plus pausing (not just not-playing) everything off-screen keeps at most a
+   small handful of decoders alive at any moment. */
 const thumbVideoObserver = new IntersectionObserver((entries) => {
   entries.forEach(entry => {
     const v = entry.target;
@@ -1306,10 +1217,18 @@ const thumbVideoObserver = new IntersectionObserver((entries) => {
       v.play().catch(() => {});
     } else {
       v.pause();
+      if(v.readyState > 0){ /* actually had decoded data -- release it, don't just pause */
+        v.removeAttribute('src');
+        v.load();
+        v.src = v.dataset.src;
+      }
     }
   });
-}, { rootMargin: '200px' });
-document.querySelectorAll('.wcard-thumb video').forEach(v => thumbVideoObserver.observe(v));
+}, { rootMargin: '0px' });
+document.querySelectorAll('.wcard-thumb video').forEach(v => {
+  v.dataset.src = v.currentSrc || v.src;
+  thumbVideoObserver.observe(v);
+});
 
 /* ---------------- work / project detail modals ---------------- */
 function openModal(id){
