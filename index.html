@@ -18,7 +18,7 @@
   *{margin:0;padding:0;box-sizing:border-box;}
   html,body{
     background:var(--paper);color:var(--ink);
-    height:100%; overflow:hidden;
+    overflow-x:clip;
   }
   body{
     font-family:'Inter',sans-serif;
@@ -59,26 +59,27 @@
   .menu-btn.open .bars span:nth-child(2){ opacity:0; }
   .menu-btn.open .bars span:nth-child(3){ transform:translateY(-4px) rotate(-45deg); }
 
-  /* ---------- hero (pinned, never scrolls) ---------- */
-  .view{
-    position:fixed; inset:0;
-    z-index:5;
-    transition:opacity .45s ease;
+  /* ---------- hero: tall scroll-linked section, title pinned via sticky while spiral animates ---------- */
+  .hero{
+    position:relative;
+    height:130vh;
   }
-  .view.hidden{ opacity:0; pointer-events:none; }
+  .hero-sticky{
+    position:sticky; top:0; left:0;
+    height:100vh;
+    overflow:hidden;
+  }
 
   .hero-left{
-    --tx:0px; --ty:-50%;
-    position:fixed; left:40px; top:50%;
-    transform:translate(var(--tx),var(--ty));
-    transition:transform .55s cubic-bezier(.16,.8,.3,1), top .6s cubic-bezier(.16,.8,.3,1);
+    --tx:0px;
+    position:absolute; left:40px; top:50%;
+    transform:translate(var(--tx),-50%);
+    transition:transform .55s cubic-bezier(.16,.8,.3,1);
     z-index:10;
     display:flex; flex-direction:column; gap:26px;
-    max-height:84vh;
-    will-change:transform;
+    max-width:60vw;
   }
   .hero-left.shift{ --tx:var(--title-shift); }
-  .hero-left.raised{ top:70px; --ty:0px; }
   .title-block{ flex:none; }
   .title-block .eyebrow{
     font-size:10.5px; letter-spacing:0.28em; text-transform:uppercase; color:var(--mute);
@@ -107,21 +108,17 @@
   }
   @keyframes sweep{ 0%{transform:translateX(-100%);} 50%{transform:translateX(0);} 100%{transform:translateX(100%);} }
 
-  /* ---------- profile panel (overlays hero, doesn't hide it) ---------- */
-  .profile-panel{
-    width:0;
-    max-height:0; opacity:0; overflow:hidden; pointer-events:none;
-    transition:max-height .6s cubic-bezier(.16,.8,.3,1), opacity .4s ease;
+  /* ---------- profile section (normal in-flow content right after the hero) ----------
+     pulled up with a negative margin so its top slides over the tail of the pinned spiral
+     instead of waiting for a hard cut -- the two are meant to overlap briefly while scrolling. */
+  .profile-wrap{
+    position:relative; z-index:3;
+    max-width:680px; margin:-22vh auto 0;
+    padding:70px 8vw 120px;
+    background:var(--paper);
   }
-  .profile-panel.active{
-    width:min(440px, 78vw);
-    max-height:60vh; opacity:1; pointer-events:auto; overflow-y:auto;
-    scrollbar-width:none; -ms-overflow-style:none;
-  }
-  .profile-panel.active::-webkit-scrollbar{ display:none; width:0; height:0; }
-  .profile-panel-inner{ padding:2px 4px 24px 0; }
-  .profile-panel-inner > .eyebrow{ display:block; font-size:10.5px; letter-spacing:0.28em; text-transform:uppercase; color:var(--mute); margin-bottom:20px; }
-  .profile-section{ scroll-margin-top:20px; }
+  .profile-wrap > .eyebrow{ display:block; font-size:10.5px; letter-spacing:0.28em; text-transform:uppercase; color:var(--mute); margin-bottom:20px; }
+  .profile-section{ scroll-margin-top:110px; }
   .profile-section + .profile-section{ margin-top:48px; padding-top:40px; border-top:1px solid var(--line); }
   .panel-title{
     font-family:'Fraunces',serif; font-weight:300; font-style:italic; font-size:26px;
@@ -231,22 +228,11 @@
     font-size:9.5px; color:rgba(255,255,255,0.85); letter-spacing:0.1em;
   }
 
-  /* ---------- destination views (swap in over hero) ---------- */
+  /* ---------- content sections (normal in-flow blocks, part of the one scrolling page) ---------- */
   .stage{
     display:block;
-    overflow-y:auto;
-    -webkit-overflow-scrolling:touch;
     background:var(--paper);
-    padding:130px 8vw 120px;
-    scrollbar-width:none; -ms-overflow-style:none;
-    will-change:transform;
-  }
-  .stage::-webkit-scrollbar{ display:none; width:0; height:0; }
-  .stage .back{
-    position:fixed; top:30px; right:36px;
-    font-size:10.5px; letter-spacing:0.2em; text-transform:uppercase;
-    color:var(--mute); cursor:pointer;
-    z-index:20;
+    padding:80px 8vw 120px;
   }
   .stage .eyebrow{ font-size:10px; letter-spacing:0.3em; text-transform:uppercase; color:var(--mute); }
   .stage h2{ font-family:'Fraunces',serif; font-weight:300; font-style:italic; font-size:42px; }
@@ -397,9 +383,8 @@
     .nav-group .chev{ font-size:10px; }
     .nav-group ul a{ font-size:10px; padding:5px 0 5px 14px; line-height:1.4; }
     .nav-group ul a:hover, .nav-group ul a.current{ padding-left:18px; }
-    .hero-left{ left:24px; }
-    .profile-panel.active{ max-height:50vh; }
-    .stage{ padding:110px 6vw 100px; }
+    .hero-left{ left:24px; max-width:70vw; }
+    .stage{ padding:100px 6vw 100px; }
     .modal-box{ padding:44px 24px 32px; }
   }
   /* ---------- phone only: collapse the two-column grids to one ---------- */
@@ -464,77 +449,76 @@
     </div>
   </nav>
 
-  <div class="view" id="hero">
-    <div class="hero-left" id="heroLeft">
-      <div class="title-block" id="titleBlock">
-        <div class="eyebrow">ui / interactive / graphic</div>
-        <h1>nanami<b>shibata</b></h1>
-        <div class="hint">scroll to explore<span></span></div>
-      </div>
-
-      <!-- ================= 01 profile (overlays hero, scroll-connected) ================= -->
-
-      <div class="profile-panel" id="profile-page">
-        <div class="profile-panel-inner">
-          <span class="eyebrow">01 — profile</span>
-
-          <section class="profile-section" id="section-about">
-            <h2 class="panel-title">about me</h2>
-            <div class="panel-media"><img src="image/profile/自己紹介写真_about.jpg" alt="柴田虹美" loading="lazy"></div>
-            <div class="block">
-              <p>柴田 虹美（Nanami Shibata）<br>兵庫県立伊川谷北高等学校卒業。神戸芸術工科大学 芸術工学部 ビジュアルデザイン学科 WEB・デジタルデザインコース3年在学中。</p>
-            </div>
-            <div class="block">
-              <p>大学では、印刷物からWeb・映像・インタラクティブまで幅広いデザインを学び、ゼミではインタラクティブアートの研究に取り組んでいます。学業への取り組みが評価され、2024年度・2026年度には特待生に選出されました。</p>
-            </div>
-            <div class="block">
-              <p>好奇心旺盛で向上心が高く、新しい技術や表現に積極的に挑戦しています。サークルではダンス・バスケットボール・フットサルに所属し、多様な人とのコミュニケーションやチームワークも大切にしています。</p>
-            </div>
-            <div class="block">
-              <p>将来は、インタラクティブデザインを通して、言語や価値観の違いを超え、人と人をつなぐ新しいコミュニケーション体験を創造できるクリエイターを目指しています。</p>
-            </div>
-          </section>
-
-          <section class="profile-section" id="section-skills">
-            <h2 class="panel-title">skills</h2>
-
-            <div class="block">
-              <b>Field</b>
-              <div class="skill-tags">
-                <span>Interactive Art</span><span>Graphic Design</span><span>Web / UI</span>
-                <span>Motion Graphics</span><span>3DCG</span><span>Illustration</span><span>Direction</span>
-              </div>
-            </div>
-
-            <div class="block">
-              <b>Tools</b>
-              <div class="skill-tags">
-                <span>Photoshop</span><span>Illustrator</span><span>After Effects</span><span>Premiere Pro</span>
-                <span>Unity</span><span>TouchDesigner</span><span>Blender</span><span>VSCode</span>
-              </div>
-            </div>
-
-            <div class="block">
-              <b>Certifications</b>
-              <ul class="plain">
-                <li>色彩検定 2級</li>
-                <li>Photoshopクリエイター能力認定試験 エキスパート</li>
-                <li>Illustratorクリエイター能力認定試験 エキスパート</li>
-                <li>MOS Word エキスパート</li>
-                <li>MOS Excel 一般</li>
-              </ul>
-            </div>
-          </section>
+  <section class="hero" id="hero">
+    <div class="hero-sticky">
+      <div class="hero-left" id="heroLeft">
+        <div class="title-block" id="titleBlock">
+          <div class="eyebrow">ui / interactive / graphic</div>
+          <h1>nanami<b>shibata</b></h1>
+          <div class="hint">scroll to explore<span></span></div>
         </div>
       </div>
+      <div class="spiral-stage" id="spiralStage"></div>
     </div>
+  </section>
 
-    <div class="spiral-stage" id="spiralStage"></div>
-  </div>
+  <!-- ================= 01 profile ================= -->
+
+  <section class="profile-wrap" id="profile-page">
+    <span class="eyebrow">01 — profile</span>
+
+    <section class="profile-section" id="section-about">
+      <h2 class="panel-title">about me</h2>
+      <div class="panel-media"><img src="image/profile/自己紹介写真_about.jpg" alt="柴田虹美" loading="lazy"></div>
+      <div class="block">
+        <p>柴田 虹美（Nanami Shibata）<br>兵庫県立伊川谷北高等学校卒業。神戸芸術工科大学 芸術工学部 ビジュアルデザイン学科 WEB・デジタルデザインコース3年在学中。</p>
+      </div>
+      <div class="block">
+        <p>大学では、印刷物からWeb・映像・インタラクティブまで幅広いデザインを学び、ゼミではインタラクティブアートの研究に取り組んでいます。学業への取り組みが評価され、2024年度・2026年度には特待生に選出されました。</p>
+      </div>
+      <div class="block">
+        <p>好奇心旺盛で向上心が高く、新しい技術や表現に積極的に挑戦しています。サークルではダンス・バスケットボール・フットサルに所属し、多様な人とのコミュニケーションやチームワークも大切にしています。</p>
+      </div>
+      <div class="block">
+        <p>将来は、インタラクティブデザインを通して、言語や価値観の違いを超え、人と人をつなぐ新しいコミュニケーション体験を創造できるクリエイターを目指しています。</p>
+      </div>
+    </section>
+
+    <section class="profile-section" id="section-skills">
+      <h2 class="panel-title">skills</h2>
+
+      <div class="block">
+        <b>Field</b>
+        <div class="skill-tags">
+          <span>Interactive Art</span><span>Graphic Design</span><span>Web / UI</span>
+          <span>Motion Graphics</span><span>3DCG</span><span>Illustration</span><span>Direction</span>
+        </div>
+      </div>
+
+      <div class="block">
+        <b>Tools</b>
+        <div class="skill-tags">
+          <span>Photoshop</span><span>Illustrator</span><span>After Effects</span><span>Premiere Pro</span>
+          <span>Unity</span><span>TouchDesigner</span><span>Blender</span><span>VSCode</span>
+        </div>
+      </div>
+
+      <div class="block">
+        <b>Certifications</b>
+        <ul class="plain">
+          <li>色彩検定 2級</li>
+          <li>Photoshopクリエイター能力認定試験 エキスパート</li>
+          <li>Illustratorクリエイター能力認定試験 エキスパート</li>
+          <li>MOS Word エキスパート</li>
+          <li>MOS Excel 一般</li>
+        </ul>
+      </div>
+    </section>
+  </section>
 
   <!-- ================= 02 works (card grid, click -> modal) ================= -->
 
-  <div class="view stage hidden" id="stage-works">
+  <div class="stage" id="stage-works">
     <div class="stage-inner grid-page">
       <span class="eyebrow">02 — works</span>
       <h2>works</h2>
@@ -691,7 +675,7 @@
 
   <!-- ================= 03 projects (card grid, click -> modal) ================= -->
 
-  <div class="view stage hidden" id="stage-projects">
+  <div class="stage" id="stage-projects">
     <div class="stage-inner grid-page">
       <span class="eyebrow">03 — projects</span>
       <h2>projects</h2>
@@ -1147,7 +1131,7 @@
 
   <!-- ================= 04 contact ================= -->
 
-  <div class="view stage hidden" id="stage-contact">
+  <div class="stage" id="stage-contact">
     <div class="stage-inner">
       <span class="eyebrow">04 — contact</span>
       <h2>contact</h2>
@@ -1165,38 +1149,34 @@
 <script>
 /* ---------------- data ---------------- */
 const items = [
-  {cat:'web (ui)', hue:'#3B4A63', page:'stage-works', target:'grid-web', img:'image/_spiral_thumbs/web.jpg'},
-  {cat:'graphic design', hue:'#96742E', page:'stage-works', target:'grid-graphic', img:'image/_spiral_thumbs/graphic.jpg'},
-  {cat:'interactive art', hue:'#5B4B78', page:'stage-works', target:'work-vdj', img:'image/_spiral_thumbs/vdj.jpg'},
-  {cat:'v たこ', hue:'#3B4A63', page:'stage-projects', target:'grid-vtako', img:'image/_spiral_thumbs/vtako.jpg'},
+  {cat:'web (ui)', hue:'#3B4A63', target:'grid-web', img:'image/_spiral_thumbs/web.jpg'},
+  {cat:'graphic design', hue:'#96742E', target:'grid-graphic', img:'image/_spiral_thumbs/graphic.jpg'},
+  {cat:'interactive art', hue:'#5B4B78', target:'work-vdj', img:'image/_spiral_thumbs/vdj.jpg'},
+  {cat:'v たこ', hue:'#3B4A63', target:'grid-vtako', img:'image/_spiral_thumbs/vtako.jpg'},
 ];
 
 /* ---------------- build spiral items ---------------- */
-const stage = document.getElementById('spiralStage');
+const spiralStageEl = document.getElementById('spiralStage');
 const N = items.length;
 const els = items.map((it, i) => {
   const el = document.createElement('div');
   el.className = 'item';
   el.innerHTML = `<div class="swatch" style="background:${it.hue}"><img src="${it.img}" alt="" fetchpriority="high"><span class="idx">0${i+1}</span><span class="cat">${it.cat}</span></div>`;
-  el.addEventListener('click', () => {
-    const groupName = it.page === 'stage-works' ? 'works' : it.page === 'stage-projects' ? 'projects' : null;
-    if(groupName) revealSidebarFor(groupName);
-    openStageAndScrollTo(it.page, it.target);
-  });
-  stage.appendChild(el);
+  el.addEventListener('click', () => { scrollToSection(it.target); });
+  spiralStageEl.appendChild(el);
   return el;
 });
 
-/* ---------------- rotation + vertical climb, driven by scroll input only ---------------- */
-let rotation = 0;          /* radians, advances only in response to wheel events */
-let spacing = 115;         /* vertical pitch between spiral loops, wheel-controlled */
-let climb = 0;             /* px, advances only in response to wheel events */
+/* ---------------- rotation + vertical climb, driven by how far the page has scrolled through the hero ---------------- */
+let rotation = 0;
+let spacing = 115;         /* vertical pitch between spiral loops */
+let climb = 0;              /* px */
 /* keep N*spacing comfortably taller than the viewport so the wrap seam (where a
    card reappears at the bottom) stays off-screen -- it should only be visible
    right as a card scrolls from top back around to the bottom, never mid-screen */
 const SPACING_MIN = 100, SPACING_MAX = 150;
-const ROT_PER_DELTA = 0.0006;   /* radians per wheel deltaY */
-const CLIMB_PER_DELTA = 0.3;    /* px per wheel deltaY */
+const ROTATION_TOTAL = Math.PI * 2 * 2.2;   /* total radians spun across the hero's whole scroll span */
+const CLIMB_TOTAL = 900;                    /* total px climbed across the hero's whole scroll span */
 const EDGE_FADE = 70;      /* px, fade zone at top/bottom of the wrap loop */
 
 function renderSpiral(){
@@ -1210,7 +1190,7 @@ function renderSpiral(){
     const z = Math.cos(theta);                 /* -1..1 depth */
     const x = cx + Math.sin(theta) * radiusX;
 
-    /* climb upward forever, wrapping back in from the bottom (spiral staircase) */
+    /* climb upward, wrapping back in from the bottom (spiral staircase) */
     const rawY = (i - N / 2) * spacing - climb;
     const wrappedY = ((rawY % wrapSpan) + wrapSpan) % wrapSpan - wrapSpan / 2;
     const y = cy + wrappedY + Math.sin(theta * 0.5) * 14;
@@ -1226,66 +1206,51 @@ function renderSpiral(){
   });
 }
 
-renderSpiral(); /* initial layout -- no perpetual loop, only wheel/resize trigger further renders */
-window.addEventListener('resize', renderSpiral);
-
-/* ---------------- reveal the sidebar, optionally opening + highlighting one group ---------------- */
-let sidebarRevealed = false;
+/* ---------------- reveal the sidebar on first scroll, once, ever ----------------
+   `autoRevealed` is separate from the sidebar's actual open/closed state on purpose: it only
+   guards the one-time auto-open triggered by scrolling past the hero. If it were the same flag
+   the manual hamburger toggle wrote to, closing the menu anywhere below the hero and then
+   scrolling even slightly would flip it back to "not revealed" and the scroll listener (which
+   runs on every scroll on the page, not just the hero) would immediately pop it open again. */
+let autoRevealed = false;
 function revealSidebar(){
-  sidebarRevealed = true;
+  autoRevealed = true;
   document.getElementById('sidebar').classList.add('show');
   document.getElementById('heroLeft').classList.add('shift');
   document.getElementById('menuBtn').classList.add('open');
   document.body.classList.add('sidebar-open');
 }
-function revealSidebarFor(groupName){
-  revealSidebar();
-  document.querySelectorAll('.nav-group[data-group]').forEach(g => {
-    g.classList.toggle('open', g.dataset.group === groupName);
-  });
-}
 
-/* ---------------- wheel/touch: adjust spacing + reveal sidebar, first view only ----------------
-   deltas are batched into a single rAF-scheduled update instead of writing styles on every raw
-   event -- a fast trackpad/touch flick can fire dozens of wheel/touchmove events per frame, and
-   writing el.style.transform on every one of them is what was causing Chrome to intermittently
-   fail to paint the spiral cards (and eventually sibling fixed elements) during active scrolling. */
-let pendingDelta = 0;
-let rafScheduled = false;
-function applyPendingDelta(){
-  rafScheduled = false;
-  const d = pendingDelta;
-  pendingDelta = 0;
-  spacing = Math.max(SPACING_MIN, Math.min(SPACING_MAX, spacing + d * 0.12));
-  rotation += d * ROT_PER_DELTA;
-  climb += d * CLIMB_PER_DELTA;
+/* ---------------- everything below is driven by the page's own native scroll position ----------------
+   the site used to be a set of position:fixed panels, each with its own internal overflow-y:auto
+   scroll container, with the spiral hero animated by hijacking wheel/touch events by hand. That
+   combination is exactly the pattern Chrome's compositor was intermittently failing to repaint
+   (menu/text/cards going invisible after scrolling), and on mobile the hand-rolled wheel-only
+   animation meant touch scrolling did nothing at all on the first view. Using one normal
+   top-to-bottom document with a single position:sticky hero avoids both problems: scrolling is
+   100% native (works identically with mouse wheel, trackpad, touch, keyboard), and the spiral's
+   rotation/climb is simply a function of how far window.scrollY has moved through the hero. */
+const heroEl = document.getElementById('hero');
+let scrollRafScheduled = false;
+function updateOnScroll(){
+  scrollRafScheduled = false;
+  const total = Math.max(1, heroEl.offsetHeight - window.innerHeight);
+  const scrolled = Math.min(Math.max(-heroEl.getBoundingClientRect().top, 0), total);
+  const progress = scrolled / total; /* 0 at top of hero, 1 once fully scrolled past it */
+
+  rotation = progress * ROTATION_TOTAL;
+  climb = progress * CLIMB_TOTAL;
+  spacing = SPACING_MIN + (SPACING_MAX - SPACING_MIN) * Math.min(1, progress * 2);
   renderSpiral();
-  if(!sidebarRevealed) revealSidebar();
-}
-function queueSpiralDelta(deltaY){
-  const heroActive = !document.getElementById('hero').classList.contains('hidden');
-  if(!heroActive) return; /* scrolling other pages must never touch the menu or spiral */
-  if(profilePage.classList.contains('active')) return; /* scrolling the profile panel must stay on the first view, no menu */
-  pendingDelta += deltaY;
-  if(!rafScheduled){ rafScheduled = true; requestAnimationFrame(applyPendingDelta); }
-}
-window.addEventListener('wheel', (e) => { queueSpiralDelta(e.deltaY); }, {passive:true});
 
-/* touch devices never fire wheel events -- without this, swiping on the first view did nothing
-   (spiral frozen, sidebar never reveals), which read as "scrolling doesn't work" on mobile. */
-let touchStartY = null;
-window.addEventListener('touchstart', (e) => {
-  const heroActive = !document.getElementById('hero').classList.contains('hidden');
-  if(!heroActive){ touchStartY = null; return; }
-  touchStartY = e.touches[0].clientY;
+  if(progress > 0.02 && !autoRevealed) revealSidebar();
+}
+window.addEventListener('scroll', () => {
+  if(!scrollRafScheduled){ scrollRafScheduled = true; requestAnimationFrame(updateOnScroll); }
 }, {passive:true});
-window.addEventListener('touchmove', (e) => {
-  if(touchStartY === null) return;
-  const y = e.touches[0].clientY;
-  queueSpiralDelta((touchStartY - y) * 2.2);
-  touchStartY = y;
-}, {passive:true});
-window.addEventListener('touchend', () => { touchStartY = null; }, {passive:true});
+window.addEventListener('resize', () => { renderSpiral(); updateOnScroll(); });
+renderSpiral();
+updateOnScroll();
 
 /* ---------------- hamburger toggle (manual open/close) ---------------- */
 const menuBtn = document.getElementById('menuBtn');
@@ -1297,75 +1262,41 @@ menuBtn.addEventListener('click', () => {
   menuBtn.classList.toggle('open', isOpen);
   heroLeftEl.classList.toggle('shift', isOpen);
   document.body.classList.toggle('sidebar-open', isOpen);
-  sidebarRevealed = isOpen;
 });
 
-/* ---------------- profile page: overlay on top of hero, hero stays visible ---------------- */
-const profilePage = document.getElementById('profile-page');
-function openProfileAndScrollTo(targetId){
-  const alreadyOpen = profilePage.classList.contains('active');
-  if(!alreadyOpen){
-    document.querySelectorAll('.stage').forEach(s => s.classList.add('hidden'));
-    document.getElementById('hero').classList.remove('hidden');
-    closeModal();
-    profilePage.classList.add('active');
-    heroLeftEl.classList.add('raised');
-  }
-  const el = document.getElementById(targetId);
-  if(el) requestAnimationFrame(() => el.scrollIntoView({ behavior: alreadyOpen ? 'smooth' : 'auto', block: 'start' }));
-}
-function closeProfile(){
-  profilePage.classList.remove('active');
-  heroLeftEl.classList.remove('raised');
+/* ---------------- navigation: the whole site is one document now, so every nav action is just a scroll ---------------- */
+function scrollToSection(id){
+  const el = document.getElementById(id);
+  if(el) el.scrollIntoView({ behavior:'smooth', block:'start' });
 }
 
-/* ---------------- stage navigation (SPA-style view swap) ---------------- */
-function openStage(id){
-  closeProfile();
-  closeModal();
-  document.querySelectorAll('.stage').forEach(s => s.classList.add('hidden'));
-  document.getElementById('hero').classList.add('hidden');
-  document.getElementById(id).classList.remove('hidden');
-  document.getElementById(id).scrollTop = 0;
-}
-function closeStage(){
-  document.querySelectorAll('.stage').forEach(s => s.classList.add('hidden'));
-  document.getElementById('hero').classList.remove('hidden');
-  closeProfile();
-  closeModal();
-}
-function openStageAndScrollTo(pageId, sectionId){
-  const alreadyOpen = pageId && !document.getElementById(pageId).classList.contains('hidden');
-  if(!alreadyOpen) openStage(pageId);
-  const el = document.getElementById(sectionId);
-  if(el) requestAnimationFrame(() => el.scrollIntoView({ behavior: alreadyOpen ? 'smooth' : 'auto', block: 'start' }));
-}
-function goToPage(page, target){
-  if(page === 'profile') openProfileAndScrollTo(target);
-  else openStageAndScrollTo(page, target);
-}
-
-/* ---------------- accordion submenus: toggle open AND jump to that category's top ---------------- */
 document.querySelectorAll('.nav-group[data-group]').forEach(group => {
   group.querySelector('.head').addEventListener('click', () => {
     const willOpen = !group.classList.contains('open');
     document.querySelectorAll('.nav-group[data-group]').forEach(g => g.classList.remove('open'));
     if(willOpen) group.classList.add('open');
-    if(group.dataset.page) goToPage(group.dataset.page, group.dataset.top);
+    if(group.dataset.top) scrollToSection(group.dataset.top);
   });
 });
 
 document.querySelectorAll('a[data-target]').forEach(a => {
   a.addEventListener('click', (e) => {
     e.preventDefault();
-    goToPage(a.dataset.page, a.dataset.target);
+    scrollToSection(a.dataset.target);
   });
 });
 document.querySelectorAll('.nav-group.contact-row').forEach(row => {
-  row.addEventListener('click', () => openStage(row.dataset.target));
+  row.addEventListener('click', () => scrollToSection(row.dataset.target));
 });
-document.querySelectorAll('[data-back]').forEach(b => b.addEventListener('click', closeStage));
-markEl.addEventListener('click', (e) => { if(e.target === markEl || e.target.classList.contains('wordmark')){ closeStage(); } });
+markEl.addEventListener('click', (e) => {
+  if(e.target === markEl || e.target.classList.contains('wordmark')){
+    window.scrollTo({ top:0, behavior:'smooth' });
+    sidebarEl.classList.remove('show');
+    menuBtn.classList.remove('open');
+    heroLeftEl.classList.remove('shift');
+    document.body.classList.remove('sidebar-open');
+  }
+});
 
 /* ---------------- wcard thumb videos: only load/play while on screen ---------------- */
 const thumbVideoObserver = new IntersectionObserver((entries) => {
@@ -1411,23 +1342,22 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
 });
 
 /* ---------------- scroll-spy: highlight current works/projects category in sidebar ---------------- */
-function setupScrollSpy(containerId, sectionSelector, pageKey){
-  const containerEl = document.getElementById(containerId);
-  const sections = containerEl.querySelectorAll(sectionSelector);
+function setupScrollSpy(sectionSelector, pageKey){
+  const sections = document.querySelectorAll(sectionSelector);
   if(!sections.length) return;
-  const links = document.querySelectorAll(`.sidebar a[data-page="${pageKey || containerId}"]`);
+  const links = document.querySelectorAll(`.sidebar a[data-page="${pageKey}"]`);
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if(entry.isIntersecting){
         links.forEach(l => l.classList.toggle('current', l.dataset.target === entry.target.id));
       }
     });
-  }, { root: containerEl, rootMargin: '-40% 0px -55% 0px', threshold: 0 });
+  }, { rootMargin: '-40% 0px -55% 0px', threshold: 0 });
   sections.forEach(s => observer.observe(s));
 }
-setupScrollSpy('stage-works', '.grid-section');
-setupScrollSpy('stage-projects', '.wcard[id^="grid-"]');
-setupScrollSpy('profile-page', '.profile-section', 'profile');
+setupScrollSpy('.grid-section', 'stage-works');
+setupScrollSpy('.wcard[id^="grid-"]', 'stage-projects');
+setupScrollSpy('.profile-section', 'profile');
 </script>
 </body>
 </html>
