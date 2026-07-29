@@ -62,6 +62,24 @@ markEl.addEventListener('click', (e) => {
   }
 });
 
+document.getElementById('backToTop').addEventListener('click', (e) => {
+  e.preventDefault();
+  window.scrollTo({ top:0, behavior:'smooth' });
+});
+
+/* ---------------- magnetic hover on text links ----------------
+   only active while the cursor is over one specific small link, so unlike the old
+   scroll-driven animations this never touches more than one element at a time. */
+document.querySelectorAll('.link').forEach(el => {
+  el.addEventListener('mousemove', (e) => {
+    const r = el.getBoundingClientRect();
+    const relX = e.clientX - (r.left + r.width / 2);
+    const relY = e.clientY - (r.top + r.height / 2);
+    el.style.transform = `translate(${relX * 0.25}px, ${relY * 0.35}px)`;
+  });
+  el.addEventListener('mouseleave', () => { el.style.transform = ''; });
+});
+
 /* ---------------- grid thumbnail preview videos ----------------
    each wcard-thumb video is a short 3s muted loop clip. Only the ones currently on screen
    play (IntersectionObserver), and all of them pause whenever a modal is open -- so at most
