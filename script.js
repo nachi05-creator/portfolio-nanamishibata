@@ -62,38 +62,28 @@ markEl.addEventListener('click', (e) => {
   }
 });
 
-/* ---------------- wcard thumb videos: only decode/play the one on screen ----------------
-   there are 25 of these on one long page. A 200px rootMargin meant several could be decoding
-   at once on a fast scroll, and mobile Safari has a hard cap on simultaneous hardware video
-   decoders -- blowing past it is a likely contributor to the tab crashing on real devices.
-   0px margin plus pausing (not just not-playing) everything off-screen keeps at most a
-   small handful of decoders alive at any moment. */
-const thumbVideoObserver = new IntersectionObserver((entries) => {
+/* ---------------- grid thumbnail preview videos ----------------
+   each wcard-thumb video is a short 3s muted loop clip. Only the ones currently on screen
+   play (IntersectionObserver), and all of them pause whenever a modal is open -- so at most
+   one video decodes at a time: either the visible thumbs, or the modal's own video, never both. */
+const wcardVideos = document.querySelectorAll('.wcard-vid');
+let modalIsOpen = false;
+const wcardVideoObserver = new IntersectionObserver((entries) => {
   entries.forEach(entry => {
-    const v = entry.target;
-    if(entry.isIntersecting && !document.querySelector('.modal-overlay.active')){
-      v.play().catch(() => {});
-    } else {
-      v.pause();
-      if(v.readyState > 0){ /* actually had decoded data -- release it, don't just pause */
-        v.removeAttribute('src');
-        v.load();
-        v.src = v.dataset.src;
-      }
-    }
+    if(modalIsOpen) return;
+    if(entry.isIntersecting) entry.target.play().catch(() => {});
+    else entry.target.pause();
   });
-}, { rootMargin: '0px' });
-document.querySelectorAll('.wcard-thumb video').forEach(v => {
-  v.dataset.src = v.currentSrc || v.src;
-  thumbVideoObserver.observe(v);
-});
+}, { rootMargin: '100px 0px' });
+wcardVideos.forEach(v => wcardVideoObserver.observe(v));
 
 /* ---------------- work / project detail modals ---------------- */
 function openModal(id){
   const m = document.getElementById(id);
   if(!m) return;
+  modalIsOpen = true;
+  wcardVideos.forEach(v => v.pause());
   m.classList.add('active');
-  document.querySelectorAll('.wcard-thumb video').forEach(v => v.pause());
   m.querySelectorAll('video').forEach(v => {
     v.muted = false;
     v.currentTime = 0;
@@ -105,9 +95,10 @@ function closeModal(){
     m.classList.remove('active');
     m.querySelectorAll('video').forEach(v => { v.pause(); v.muted = true; });
   });
-  document.querySelectorAll('.wcard-thumb video').forEach(v => {
+  modalIsOpen = false;
+  wcardVideos.forEach(v => {
     const r = v.getBoundingClientRect();
-    if(r.top < window.innerHeight + 200 && r.bottom > -200){ v.play().catch(() => {}); }
+    if(r.top < window.innerHeight && r.bottom > 0) v.play().catch(() => {});
   });
 }
 document.querySelectorAll('.wcard[data-modal]').forEach(card => {
