@@ -121,8 +121,10 @@
 
   /* ---------- sidebar menu ---------- */
   .sidebar{
-    position:fixed; top:0; left:0; bottom:0;
+    position:fixed; top:0; left:0;
     width:var(--sidebar-w);
+    height:100vh;
+    height:calc(100dvh + 60px);
     background:var(--paper);
     border-right:1px solid var(--line);
     padding:88px 32px 40px;
