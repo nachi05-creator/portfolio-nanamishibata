@@ -294,6 +294,8 @@
   .block p{ font-size:13px; line-height:1.95; color:var(--ink); text-align:left; max-width:none; }
   ul.plain{ list-style:none; }
   ul.plain li{ font-size:13px; line-height:2; color:var(--ink); }
+  ul.dots li{ padding-left:1em; text-indent:-1em; }
+  ul.dots li::before{ content:"・"; }
   .link{
     display:inline-block; margin-top:6px; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase;
     color:var(--ink); border-bottom:1px solid var(--ink); padding-bottom:2px; text-decoration:none;
