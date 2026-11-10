@@ -104,6 +104,8 @@ function openModal(id){
   modalIsOpen = true;
   wcardVideos.forEach(v => v.pause());
   m.classList.add('active');
+  /* modal images carry data-src so nothing in a closed modal is ever requested/decoded */
+  m.querySelectorAll('img[data-src]').forEach(img => { img.src = img.dataset.src; img.removeAttribute('data-src'); });
   m.querySelectorAll('video').forEach(v => {
     v.muted = false;
     v.currentTime = 0;
