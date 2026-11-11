@@ -82,6 +82,20 @@ document.querySelectorAll('.link').forEach(el => {
   el.addEventListener('mouseleave', () => { el.style.transform = ''; });
 });
 
+/* ---------------- selected works marquee: jump to the matching card in the works grid ---------------- */
+document.querySelectorAll('.sel-card[data-modal]').forEach(a => {
+  a.addEventListener('click', (e) => {
+    e.preventDefault();
+    const card = document.querySelector('.wcard[data-modal="' + a.dataset.modal + '"]');
+    if(!card) return;
+    card.scrollIntoView({ behavior:'smooth', block:'center' });
+    card.classList.remove('flash');
+    void card.offsetWidth;
+    card.classList.add('flash');
+    setTimeout(() => card.classList.remove('flash'), 2000);
+  });
+});
+
 /* ---------------- grid thumbnail preview videos ----------------
    each wcard-thumb video is a short 3s muted loop clip. Only the ones currently on screen
    play (IntersectionObserver), and all of them pause whenever a modal is open -- so at most
