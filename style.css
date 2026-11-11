@@ -346,7 +346,10 @@
   .marquee{ overflow:hidden; }
   .marquee-track{ display:flex; width:max-content; }
   .marquee-group{ display:flex; flex:none; animation:marquee 64s linear infinite; }
-  .marquee:hover .marquee-group, .marquee:focus-within .marquee-group{ animation-play-state:paused; }
+  /* pause only while a mouse is really hovering (not after a tap -- touch screens keep :hover stuck) or while
+     a keyboard user has focus on a card; a plain mouse click must not leave the strip frozen. */
+  @media (hover:hover){ .marquee:hover .marquee-group{ animation-play-state:paused; } }
+  .marquee:has(.sel-card:focus-visible) .marquee-group{ animation-play-state:paused; }
   @keyframes marquee{ from{ transform:translateX(0); } to{ transform:translateX(-100%); } }
   .sel-card{ flex:none; width:max(240px, calc(26vw - 20px)); margin-right:16px; display:block; color:var(--ink); text-decoration:none; }
   .sel-thumb{ aspect-ratio:4/3; overflow:hidden; border-radius:8px; background:rgba(255,255,255,0.08); }

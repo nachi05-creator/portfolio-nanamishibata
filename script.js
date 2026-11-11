@@ -86,6 +86,7 @@ document.querySelectorAll('.link').forEach(el => {
 document.querySelectorAll('.sel-card[data-modal]').forEach(a => {
   a.addEventListener('click', (e) => {
     e.preventDefault();
+    a.blur(); /* don't leave focus on the strip */
     const card = document.querySelector('.wcard[data-modal="' + a.dataset.modal + '"]');
     if(!card) return;
     card.scrollIntoView({ behavior:'smooth', block:'center' });
