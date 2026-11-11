@@ -333,35 +333,32 @@
 
 
   /* ---------- selected works marquee ----------
-     two identical groups of 5 cards sit side by side and each slides left by exactly its own width,
-     so the loop is seamless. Each animated element is only ~1.3x the viewport wide -- one giant
-     3-copy strip (up to ~10000px) can fail to get a GPU layer on some browsers and renders blank.
-     Plain CSS animation, paused on hover/focus. Clicking a card jumps to that work in the works grid. */
+     a horizontally scrollable strip (swipe / trackpad / mouse drag) that also drifts left on its own
+     (script.js drives scrollLeft; it pauses while the visitor interacts and resumes a moment later).
+     Three identical groups of 5 cards: the strip stays in the middle group and wraps by exactly one
+     group width, so the loop is invisible and every scrolling element stays ~1.3x the viewport wide. */
   /* card width scales with the screen so one group (5 cards) is always wider than the viewport plus one card:
      5(w+16) >= vw + w  <=>  w >= vw/4 - 20, and 26vw - 20 satisfies it at every width, so the same work
      is never visible twice at once. */
   .selected{ padding:64px 0 36px; }
   /* heading lines up with the about-me column below (centered, max 680px) so the sidebar never covers it */
   .selected .panel-title{ max-width:680px; margin:0 auto 22px; padding:0 8vw; }
-  .marquee{ overflow:hidden; }
+  .marquee{
+    overflow-x:auto; overflow-y:hidden;
+    scrollbar-width:none; -ms-overflow-style:none; overscroll-behavior-x:contain;
+    cursor:grab;
+  }
+  .marquee::-webkit-scrollbar{ display:none; width:0; height:0; }
+  .marquee.dragging{ cursor:grabbing; user-select:none; }
   .marquee-track{ display:flex; width:max-content; }
-  .marquee-group{ display:flex; flex:none; animation:marquee 64s linear infinite; }
-  /* pause only while a mouse is really hovering (not after a tap -- touch screens keep :hover stuck) or while
-     a keyboard user has focus on a card; a plain mouse click must not leave the strip frozen. */
-  @media (hover:hover){ .marquee:hover .marquee-group{ animation-play-state:paused; } }
-  .marquee:has(.sel-card:focus-visible) .marquee-group{ animation-play-state:paused; }
-  @keyframes marquee{ from{ transform:translateX(0); } to{ transform:translateX(-100%); } }
+  .marquee-group{ display:flex; flex:none; }
+  .sel-card, .sel-card img{ -webkit-user-drag:none; user-select:none; }
   .sel-card{ flex:none; width:max(240px, calc(26vw - 20px)); margin-right:16px; display:block; color:var(--ink); text-decoration:none; }
   .sel-thumb{ aspect-ratio:4/3; overflow:hidden; border-radius:8px; background:rgba(255,255,255,0.08); }
   .sel-thumb img{ width:100%; height:100%; object-fit:cover; display:block; transition:transform .5s cubic-bezier(.16,.8,.3,1); }
   .sel-card:hover .sel-thumb img{ transform:scale(1.05); }
   .sel-cat{ margin-top:10px; font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--mute); }
   .sel-title{ margin-top:4px; font-size:13px; line-height:1.5; }
-  @media (prefers-reduced-motion:reduce){
-    .marquee{ overflow-x:auto; }
-    .marquee-group{ animation:none; }
-    .marquee-group[aria-hidden]{ display:none; }
-  }
   /* brief highlight on the works card a marquee click lands on */
   .wcard.flash{ animation:flash 1.8s ease; }
   @keyframes flash{ 0%,60%{ box-shadow:0 0 0 3px #96742E, 0 20px 40px rgba(20,20,20,0.12); } 100%{ box-shadow:0 14px 30px rgba(20,20,20,0.07), 0 2px 8px rgba(20,20,20,0.05); } }

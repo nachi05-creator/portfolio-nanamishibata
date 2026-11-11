@@ -97,6 +97,86 @@ document.querySelectorAll('.sel-card[data-modal]').forEach(a => {
   });
 });
 
+/* ---------------- selected works strip: drifts left by itself, scrollable by hand ----------------
+   one element, driven through scrollLeft (no transform animation). Three identical groups; it lives in the
+   middle one and wraps by exactly one group width, so the loop is invisible. Any wheel/touch/drag/keyboard
+   input pauses the drift for a couple of seconds; momentum scrolling is detected by scrollLeft drifting away
+   from what the script last wrote. */
+(function(){
+  const mq = document.querySelector('.marquee');
+  if(!mq) return;
+  const groups = mq.querySelectorAll('.marquee-group');
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const DRIFT_SECONDS = 64;   /* time to travel one group width */
+  const IDLE_MS = 2500;       /* resume drifting this long after the last interaction */
+  let S = 0, pos = 0, lastWritten = 0, lastInput = 0, last = 0;
+  let visible = false, dragging = false, moved = false, startX = 0, startLeft = 0;
+
+  const touch = () => { lastInput = performance.now(); };
+  function measure(){
+    const w = groups[0].getBoundingClientRect().width;
+    if(!w) return;
+    const first = !S;
+    const frac = S ? ((mq.scrollLeft % S) / S) : 0;
+    S = w;
+    mq.scrollLeft = S + (first ? 0 : frac * S);
+    pos = lastWritten = mq.scrollLeft;
+  }
+  function normalize(){
+    if(!S) return;
+    if(mq.scrollLeft >= 2 * S) mq.scrollLeft -= S;
+    else if(mq.scrollLeft < 1) mq.scrollLeft += S;
+    pos = lastWritten = mq.scrollLeft;
+  }
+  function tick(ts){
+    requestAnimationFrame(tick);
+    const dt = Math.min(ts - last, 100) / 1000; last = ts;
+    if(!visible || !S) return;
+    const now = performance.now();
+    if(Math.abs(mq.scrollLeft - lastWritten) > 1.5){ lastInput = now; pos = lastWritten = mq.scrollLeft; }
+    if(dragging || now - lastInput < IDLE_MS){
+      if(!dragging && now - lastInput > 600) normalize();
+      pos = lastWritten = mq.scrollLeft;
+      return;
+    }
+    if(reduce) return;
+    pos += (S / DRIFT_SECONDS) * dt;
+    if(pos >= 2 * S) pos -= S;
+    mq.scrollLeft = pos;
+    lastWritten = mq.scrollLeft;
+  }
+
+  new IntersectionObserver(es => { visible = es[0].isIntersecting; }).observe(mq);
+  window.addEventListener('resize', measure);
+  window.addEventListener('load', measure);
+  mq.addEventListener('wheel', e => { if(Math.abs(e.deltaX) > Math.abs(e.deltaY)) touch(); }, {passive:true});
+  mq.addEventListener('touchstart', touch, {passive:true});
+  mq.addEventListener('keydown', touch);
+  mq.addEventListener('dragstart', e => e.preventDefault());
+
+  /* mouse drag (touch and trackpads scroll natively) */
+  mq.addEventListener('mousedown', e => {
+    if(e.button !== 0) return;
+    dragging = true; moved = false; startX = e.clientX; startLeft = mq.scrollLeft;
+    mq.classList.add('dragging');
+  });
+  window.addEventListener('mousemove', e => {
+    if(!dragging) return;
+    const dx = e.clientX - startX;
+    if(Math.abs(dx) > 5) moved = true;
+    mq.scrollLeft = startLeft - dx;
+  });
+  window.addEventListener('mouseup', () => {
+    if(!dragging) return;
+    dragging = false; mq.classList.remove('dragging'); touch();
+  });
+  /* a drag must not count as a click on the card underneath */
+  mq.addEventListener('click', e => { if(moved){ e.preventDefault(); e.stopPropagation(); moved = false; } }, true);
+
+  measure();
+  requestAnimationFrame(tick);
+})();
+
 /* ---------------- grid thumbnail preview videos ----------------
    each wcard-thumb video is a short 3s muted loop clip. Only the ones currently on screen
    play (IntersectionObserver), and all of them pause whenever a modal is open -- so at most
