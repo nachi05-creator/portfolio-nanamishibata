@@ -203,6 +203,16 @@
     width:100%; height:100%;
     object-fit:cover;
     z-index:0;
+    pointer-events:none;
+  }
+  /* iOS blocks autoplay in Low Power Mode and then paints its own big round play button on top of any
+     <video> that can't start -- for the full-height hero background that landed mid-page. These videos are
+     decoration (poster shown instead), so never draw native play UI on videos that have no `controls`. */
+  video:not([controls])::-webkit-media-controls,
+  video:not([controls])::-webkit-media-controls-start-playback-button,
+  video:not([controls])::-webkit-media-controls-overlay-play-button,
+  video:not([controls])::-webkit-media-controls-panel{
+    display:none !important; -webkit-appearance:none; opacity:0; pointer-events:none;
   }
   .intro-wrap::after{
     content:"";
